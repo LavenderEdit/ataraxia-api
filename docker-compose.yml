@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  mysql-db:
+    image: 'mysql:8.0'
+    container_name: mysql-db-container
+    ports:
+      - '3307:3306'
+    environment:
+      MYSQL_ROOT_PASSWORD: '${MYSQL_ROOT_PASSWORD}'
+      MYSQL_DATABASE: '${MYSQL_DATABASE}'
+      MYSQL_USER: '${MYSQL_USER}'
+      MYSQL_PASSWORD: '${MYSQL_PASSWORD}'
+    volumes:
+      - 'mysql-data:/var/lib/mysql'
+    restart: unless-stopped
+    networks:
+      - zenith_network
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
+      timeout: 20s
+      retries: 10
+
+  zenith-api:
+    build: .
+    container_name: zenith-api-container
+    ports:
+      - '8081:8081'
+    env_file:
+      - .env
+    depends_on:
+      - mysql-db
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run start:dev
+    networks:
+      - zenith_network
+
+volumes:
+  mysql-data: null
+
+networks:
+  zenith_network:
+    driver: bridge
