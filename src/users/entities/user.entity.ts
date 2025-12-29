@@ -2,11 +2,11 @@ import {
     Column,
     CreateDateColumn,
     Entity,
-    OneToMany, // <--- Importar OneToMany
+    OneToMany,
     PrimaryGeneratedColumn,
     UpdateDateColumn,
 } from 'typeorm';
-import { Timer } from '../../timers/entities/timer.entity'; // <--- Importar Timer
+import { Timer } from '../../timers/entities/timer.entity';
 
 @Entity()
 export class User {
