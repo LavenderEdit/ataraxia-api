@@ -1,6 +1,14 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
+import {
+    Column,
+    CreateDateColumn,
+    Entity,
+    OneToMany, // <--- Importar OneToMany
+    PrimaryGeneratedColumn,
+    UpdateDateColumn,
+} from 'typeorm';
+import { Timer } from '../../timers/entities/timer.entity'; // <--- Importar Timer
 
-@Entity('users')
+@Entity()
 export class User {
     @PrimaryGeneratedColumn('uuid')
     id: string;
@@ -9,14 +17,23 @@ export class User {
     email: string;
 
     @Column({ nullable: true })
-    password: string;
+    password?: string;
 
-    @Column({ name: 'device_id', unique: true, nullable: true })
+    @Column({ nullable: true })
+    name?: string;
+
+    @Column({ unique: true, nullable: true })
     deviceId: string;
 
-    @Column({ name: 'is_guest', default: true })
+    @Column({ default: false })
     isGuest: boolean;
 
-    @CreateDateColumn({ name: 'created_at' })
+    @CreateDateColumn()
     createdAt: Date;
+
+    @UpdateDateColumn()
+    lastLogin: Date;
+
+    @OneToMany(() => Timer, (timer) => timer.user)
+    timers: Timer[];
 }
