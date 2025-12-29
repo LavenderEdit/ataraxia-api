@@ -1,43 +1,53 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Injectable, BadRequestException, ConflictException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '../users/entities/user.entity';
-import { GuestLoginDto } from './dto/guest-login.dto';
+import { UsersService } from '../users/users.service';
+import * as bcrypt from 'bcrypt';
+import { RegisterDto } from './dto/register.dto';
 
 @Injectable()
 export class AuthService {
     constructor(
-        @InjectRepository(User)
-        private usersRepository: Repository<User>,
+        private usersService: UsersService,
         private jwtService: JwtService,
     ) { }
 
-    // Lógica de "Lazy Registration" (Capítulo 5.1 PDF)
-    async loginGuest(guestLoginDto: GuestLoginDto) {
-        const { deviceId } = guestLoginDto;
+    async validateUser(payload: any): Promise<User | null> {
+        return this.usersService.findOne(payload.sub);
+    }
 
-        // 1. Buscar si ya existe un invitado con este deviceId
-        let user = await this.usersRepository.findOne({ where: { deviceId } });
+    async loginGuest(deviceId: string) {
+        let user = await this.usersService.findByDeviceId(deviceId);
 
-        // 2. Si no existe, lo creamos (Registro implícito)
         if (!user) {
-            user = this.usersRepository.create({
-                deviceId,
-                isGuest: true,
-            });
-            await this.usersRepository.save(user);
+            user = await this.usersService.createGuest(deviceId);
         }
 
-        // 3. Generar el JWT
         const payload = { sub: user.id, isGuest: user.isGuest };
         return {
             access_token: this.jwtService.sign(payload),
-            user: {
-                id: user.id,
-                isGuest: user.isGuest,
-                deviceId: user.deviceId,
-            },
+            user,
         };
+    }
+
+    async register(user: User, registerDto: RegisterDto) {
+        if (!user.isGuest) {
+            throw new BadRequestException('El usuario ya está registrado');
+        }
+
+        const existingEmail = await this.usersService.findByEmail(registerDto.email);
+        if (existingEmail && existingEmail.id !== user.id) {
+            throw new ConflictException('El correo electrónico ya está en uso');
+        }
+
+        const salt = await bcrypt.genSalt();
+        const hashedPassword = await bcrypt.hash(registerDto.password, salt);
+
+        user.email = registerDto.email;
+        user.name = registerDto.name;
+        user.password = hashedPassword;
+        user.isGuest = false;
+
+        return this.usersService.save(user);
     }
 }
