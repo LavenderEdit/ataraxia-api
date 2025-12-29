@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Timer } from './entities/timer.entity';
 import { User } from '../users/entities/user.entity';
-import { CreateTimerDto } from '../auth/dto/create-timer.dto';
+import { CreateTimerDto } from './dto/create-timer.dto';
 
 @Injectable()
 export class TimersService {

@@ -13,10 +13,10 @@ export class Timer {
     id: string;
 
     @Column({ nullable: true })
-    tag: string; // Ej: "Estudio", "Trabajo"
+    tag: string;
 
     @Column({ type: 'int' })
-    duration: number; // Duración en segundos
+    duration: number;
 
     @Column({ type: 'timestamp', nullable: true })
     startTime: Date;
@@ -25,12 +25,11 @@ export class Timer {
     endTime: Date;
 
     @Column({ default: 'completed' })
-    status: string; // 'completed', 'interrupted'
+    status: string;
 
     @CreateDateColumn()
     createdAt: Date;
 
-    // Relación: Muchos Timers pertenecen a Un Usuario
     @ManyToOne(() => User, (user) => user.timers, { onDelete: 'CASCADE' })
     user: User;
 }
