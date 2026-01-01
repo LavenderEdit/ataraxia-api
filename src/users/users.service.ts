@@ -10,6 +10,10 @@ export class UsersService {
         private usersRepository: Repository<User>,
     ) { }
 
+    async findByEmail(email: string): Promise<User | null> {
+        return this.usersRepository.findOne({ where: { email } });
+    }
+
     async findOne(id: string): Promise<User | null> {
         return this.usersRepository.findOne({ where: { id } });
     }
@@ -18,8 +22,10 @@ export class UsersService {
         return this.usersRepository.findOne({ where: { deviceId } });
     }
 
-    async findByEmail(email: string): Promise<User | null> {
-        return this.usersRepository.findOne({ where: { email } });
+    async findGuestByDeviceId(deviceId: string): Promise<User | null> {
+        return this.usersRepository.findOne({
+            where: { deviceId, isGuest: true }
+        });
     }
 
     async createGuest(deviceId: string): Promise<User> {
@@ -28,6 +34,19 @@ export class UsersService {
             isGuest: true,
         });
         return this.usersRepository.save(newUser);
+    }
+
+    async create(userData: Partial<User>): Promise<User> {
+        const newUser = this.usersRepository.create(userData);
+        return this.usersRepository.save(newUser);
+    }
+
+    async upgradeGuestToUser(id: string, userData: Partial<User>): Promise<User | null> {
+        await this.usersRepository.update(id, {
+            ...userData,
+            isGuest: false,
+        });
+        return this.usersRepository.findOne({ where: { id } });
     }
 
     async save(user: User): Promise<User> {
