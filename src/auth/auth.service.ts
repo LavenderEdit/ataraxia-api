@@ -4,6 +4,7 @@ import { User } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
 import { RegisterDto } from './dto/register.dto';
+import { GuestLoginDto } from './dto/guest-login.dto';
 
 @Injectable()
 export class AuthService {
@@ -12,42 +13,65 @@ export class AuthService {
         private jwtService: JwtService,
     ) { }
 
-    async validateUser(payload: any): Promise<User | null> {
-        return this.usersService.findOne(payload.sub);
+    async validateUser(email: string, pass: string): Promise<any> {
+        const user = await this.usersService.findByEmail(email);
+        if (user && user.password && (await bcrypt.compare(pass, user.password))) {
+            const { password, ...result } = user;
+            return result;
+        }
+        return null;
     }
 
-    async loginGuest(deviceId: string) {
-        let user = await this.usersService.findByDeviceId(deviceId);
-
-        if (!user) {
-            user = await this.usersService.createGuest(deviceId);
-        }
-
-        const payload = { sub: user.id, isGuest: user.isGuest };
+    async login(user: any) {
+        const payload = { username: user.email, sub: user.id, isGuest: user.isGuest };
         return {
             access_token: this.jwtService.sign(payload),
-            user,
         };
     }
 
-    async register(user: User, registerDto: RegisterDto) {
-        if (!user.isGuest) {
-            throw new BadRequestException('El usuario ya está registrado');
+    async guestLogin(guestLoginDto: GuestLoginDto) {
+        let user = await this.usersService.findGuestByDeviceId(guestLoginDto.deviceId);
+
+        if (!user) {
+            user = await this.usersService.create({
+                deviceId: guestLoginDto.deviceId,
+                isGuest: true,
+            });
         }
 
+        const payload = { sub: user.id, deviceId: user.deviceId, isGuest: true };
+        return {
+            access_token: this.jwtService.sign(payload),
+        };
+    }
+
+    async register(registerDto: RegisterDto) {
         const existingEmail = await this.usersService.findByEmail(registerDto.email);
-        if (existingEmail && existingEmail.id !== user.id) {
-            throw new ConflictException('El correo electrónico ya está en uso');
+        if (existingEmail) {
+            throw new ConflictException('El correo electrónico ya está registrado.');
         }
 
-        const salt = await bcrypt.genSalt();
-        const hashedPassword = await bcrypt.hash(registerDto.password, salt);
+        const hashedPassword = await bcrypt.hash(registerDto.password, 10);
 
-        user.email = registerDto.email;
-        user.name = registerDto.name;
-        user.password = hashedPassword;
-        user.isGuest = false;
+        if (registerDto.deviceId) {
+            const existingGuest = await this.usersService.findGuestByDeviceId(registerDto.deviceId);
 
-        return this.usersService.save(user);
+            if (existingGuest) {
+                const upgradedUser = await this.usersService.upgradeGuestToUser(existingGuest.id, {
+                    email: registerDto.email,
+                    password: hashedPassword,
+                });
+
+                return this.login(upgradedUser);
+            }
+        }
+
+        const newUser = await this.usersService.create({
+            ...registerDto,
+            password: hashedPassword,
+            isGuest: false,
+        });
+
+        return this.login(newUser);
     }
 }
