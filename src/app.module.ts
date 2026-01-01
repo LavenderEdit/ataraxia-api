@@ -1,11 +1,15 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigModule } from '@nestjs/config';
+import { ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { TimersModule } from './timers/timers.module';
+import { AuthModule } from './auth/auth.module';
+import { TasksModule } from './tasks/tasks.module';
+import { SettingsModule } from './settings/settings.module';
+
 
 @Module({
   imports: [
@@ -28,9 +32,11 @@ import { TimersModule } from './timers/timers.module';
       inject: [ConfigService],
     }),
 
-    AuthModule,
     UsersModule,
     TimersModule,
+    AuthModule,
+    TasksModule,
+    SettingsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
