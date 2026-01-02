@@ -1,21 +1,36 @@
-import { Controller, Get, Post, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request } from '@nestjs/common';
 import { TimersService } from './timers.service';
 import { CreateTimerDto } from './dto/create-timer.dto';
-import { AuthGuard } from '@nestjs/passport';
+import { UpdateTimerDto } from './dto/update-timer.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('timers')
+@UseGuards(JwtAuthGuard)
 export class TimersController {
     constructor(private readonly timersService: TimersService) { }
 
-    @UseGuards(AuthGuard('jwt'))
     @Post()
-    create(@Body() createTimerDto: CreateTimerDto, @Request() req) {
-        return this.timersService.create(createTimerDto, req.user);
+    create(@Request() req, @Body() createTimerDto: CreateTimerDto) {
+        return this.timersService.create(createTimerDto, req.user.sub);
     }
 
-    @UseGuards(AuthGuard('jwt'))
     @Get()
     findAll(@Request() req) {
-        return this.timersService.findAllByUser(req.user);
+        return this.timersService.findAll(req.user.sub);
+    }
+
+    @Get(':id')
+    findOne(@Request() req, @Param('id') id: string) {
+        return this.timersService.findOne(id, req.user.sub);
+    }
+
+    @Patch(':id')
+    update(@Request() req, @Param('id') id: string, @Body() updateTimerDto: UpdateTimerDto) {
+        return this.timersService.update(id, updateTimerDto, req.user.sub);
+    }
+
+    @Delete(':id')
+    remove(@Request() req, @Param('id') id: string) {
+        return this.timersService.remove(id, req.user.sub);
     }
 }
