@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 
 @Entity('tasks')
@@ -12,7 +12,11 @@ export class Task {
     @Column({ default: false })
     isCompleted: boolean;
 
+    @Column({ nullable: true })
+    userId: string;
+
     @ManyToOne(() => User, (user) => user.tasks, { onDelete: 'CASCADE' })
+    @JoinColumn({ name: 'userId' })
     user: User;
 
     @CreateDateColumn()
