@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Timer } from './entities/timer.entity';
 import { CreateTimerDto } from './dto/create-timer.dto';
 import { UpdateTimerDto } from './dto/update-timer.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Timer } from './entities/timer.entity';
+import { Repository } from 'typeorm';
+import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class TimersService {
@@ -12,54 +13,49 @@ export class TimersService {
         private timersRepository: Repository<Timer>,
     ) { }
 
-    async create(createTimerDto: CreateTimerDto, userId: string): Promise<Timer> {
-        const timer = new Timer();
-        Object.assign(timer, createTimerDto);
-        timer.user = { id: userId } as any;
+    async create(createTimerDto: CreateTimerDto, user: User) {
+        const timer = this.timersRepository.create({
+            ...createTimerDto,
+            user: user,
+        });
 
-        timer.userId = userId;
-
-        return this.timersRepository.save(timer);
+        return await this.timersRepository.save(timer);
     }
 
-    async findAll(userId: string): Promise<Timer[]> {
+    async findAll(user: User) {
         return this.timersRepository.find({
-            where: { user: { id: userId } },
-            order: { startTime: 'DESC' },
+            where: { user: { id: user.id } },
+            order: { createdAt: 'DESC' },
+            relations: ['task'],
         });
     }
 
-    async findOne(id: string, userId: string): Promise<Timer> {
+    async findOne(id: string, user: User) {
         const timer = await this.timersRepository.findOne({
-            where: { id, user: { id: userId } },
+            where: { id, user: { id: user.id } },
+            relations: ['task'],
         });
 
         if (!timer) {
-            throw new NotFoundException(`Timer #${id} no encontrado o no tienes acceso.`);
+            throw new NotFoundException(`Timer #${id} not found`);
         }
         return timer;
     }
 
-    async update(id: string, updateTimerDto: UpdateTimerDto, userId: string): Promise<Timer> {
-        const timer = await this.findOne(id, userId);
+    async update(id: string, updateTimerDto: UpdateTimerDto, user: User) {
+        const existingTimer = await this.findOne(id, user);
 
-        const cleanDto = Object.fromEntries(
-            Object.entries(updateTimerDto).filter(([_, v]) => v !== undefined)
-        );
+        const timerUpdate = this.timersRepository.merge(existingTimer, updateTimerDto);
 
-        Object.assign(timer, cleanDto);
+        if (Object.keys(updateTimerDto).length === 0) {
+            return existingTimer;
+        }
 
-        return this.timersRepository.save(timer);
+        return this.timersRepository.save(timerUpdate);
     }
 
-    async remove(id: string, userId: string): Promise<void> {
-        const result = await this.timersRepository.delete({
-            id,
-            user: { id: userId },
-        });
-
-        if (result.affected === 0) {
-            throw new NotFoundException(`Timer #${id} no encontrado o no tienes acceso.`);
-        }
+    async remove(id: string, user: User) {
+        const timer = await this.findOne(id, user);
+        return this.timersRepository.remove(timer);
     }
 }
