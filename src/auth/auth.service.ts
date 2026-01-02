@@ -1,9 +1,8 @@
-import { Injectable, BadRequestException, ConflictException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { User } from '../users/entities/user.entity';
+import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
-import * as bcrypt from 'bcrypt';
+import { JwtService } from '@nestjs/jwt';
 import { RegisterDto } from './dto/register.dto';
+import * as bcrypt from 'bcrypt';
 import { GuestLoginDto } from './dto/guest-login.dto';
 
 @Injectable()
@@ -26,6 +25,12 @@ export class AuthService {
         const payload = { username: user.email, sub: user.id, isGuest: user.isGuest };
         return {
             access_token: this.jwtService.sign(payload),
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                isGuest: user.isGuest
+            }
         };
     }
 
@@ -42,6 +47,7 @@ export class AuthService {
         const payload = { sub: user.id, deviceId: user.deviceId, isGuest: true };
         return {
             access_token: this.jwtService.sign(payload),
+            user: { id: user.id, isGuest: true }
         };
     }
 
@@ -60,6 +66,7 @@ export class AuthService {
                 const upgradedUser = await this.usersService.upgradeGuestToUser(existingGuest.id, {
                     email: registerDto.email,
                     password: hashedPassword,
+                    name: registerDto.name,
                 });
 
                 return this.login(upgradedUser);

@@ -1,16 +1,18 @@
-import { IsEmail, IsNotEmpty, MinLength } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, MinLength, IsOptional } from 'class-validator';
 
 export class RegisterDto {
-    @IsNotEmpty()
-    deviceId : string;
-
-    @IsNotEmpty()
+    @IsNotEmpty({ message: 'El nombre es obligatorio' })
+    @IsString()
     name: string;
 
-    @IsEmail()
+    @IsEmail({}, { message: 'El correo electrónico no es válido' })
     email: string;
 
-    @IsNotEmpty()
+    @IsNotEmpty({ message: 'La contraseña es obligatoria' })
     @MinLength(6, { message: 'La contraseña debe tener al menos 6 caracteres' })
     password: string;
+
+    @IsOptional()
+    @IsString()
+    deviceId?: string;
 }
