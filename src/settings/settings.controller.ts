@@ -15,6 +15,6 @@ export class SettingsController {
 
     @Patch()
     update(@Request() req, @Body() updateSettingDto: UpdateSettingDto) {
-        return this.settingsService.update(req.user.sub, updateSettingDto);
+        return this.settingsService.update(req.user.sub, updateSettingDto, req.user);
     }
 }

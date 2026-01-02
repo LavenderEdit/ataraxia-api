@@ -10,6 +10,7 @@ import {
 import { Timer } from '../../timers/entities/timer.entity';
 import { Task } from '../../tasks/entities/task.entity';
 import { Setting } from '../../settings/entities/setting.entity';
+import { Tag } from '../../tags/entities/tag.entity';
 
 @Entity()
 export class User {
@@ -33,6 +34,9 @@ export class User {
 
     @UpdateDateColumn()
     updatedAt: Date;
+
+    @OneToMany(() => Tag, (tag) => tag.user)
+    tags: Tag[];
 
     @OneToMany(() => Timer, (timer) => timer.user)
     timers: Timer[];

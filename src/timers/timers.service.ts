@@ -25,7 +25,7 @@ export class TimersService {
     async findAll(user: User) {
         return this.timersRepository.find({
             where: { user: { id: user.id } },
-            order: { createdAt: 'DESC' },
+            order: { startTime: 'DESC' },
             relations: ['task'],
         });
     }

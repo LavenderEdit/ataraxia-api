@@ -38,10 +38,9 @@ export class AuthService {
         let user = await this.usersService.findGuestByDeviceId(guestLoginDto.deviceId);
 
         if (!user) {
-            user = await this.usersService.create({
-                deviceId: guestLoginDto.deviceId,
-                isGuest: true,
-            });
+            user = await this.usersService.createGuest(
+                guestLoginDto.deviceId
+            );
         }
 
         const payload = { sub: user.id, deviceId: user.deviceId, isGuest: true };
@@ -66,7 +65,6 @@ export class AuthService {
                 const upgradedUser = await this.usersService.upgradeGuestToUser(existingGuest.id, {
                     email: registerDto.email,
                     password: hashedPassword,
-                    name: registerDto.name,
                 });
 
                 return this.login(upgradedUser);
@@ -76,7 +74,6 @@ export class AuthService {
         const newUser = await this.usersService.create({
             ...registerDto,
             password: hashedPassword,
-            isGuest: false,
         });
 
         return this.login(newUser);

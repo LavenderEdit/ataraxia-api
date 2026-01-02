@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { RegisterDto } from '../auth/dto/register.dto'; // Usualmente se comparte o se define
 import { User } from './entities/user.entity';
+import { RegisterDto } from 'src/auth/dto/register.dto';
 import { SettingsService } from '../settings/settings.service';
 
 @Injectable()
@@ -13,13 +13,30 @@ export class UsersService {
         private settingsService: SettingsService,
     ) { }
 
-    async create(createUserDto: RegisterDto) {
-        const user = this.usersRepository.create(createUserDto);
-        const savedUser = await this.usersRepository.save(user);
+    async findByEmail(email: string): Promise<User | null> {
+        return this.usersRepository.findOne({ where: { email } });
+    }
 
-        await this.settingsService.createDefault(savedUser);
+    async findOne(id: string): Promise<User | null> {
+        return this.usersRepository.findOne({ where: { id } });
+    }
 
-        return savedUser;
+    async findById(id: string): Promise<User | null> {
+        return this.usersRepository.findOne({ where: { id } });
+    }
+
+    async update(id: string, updateUserDto: any) {
+        return this.usersRepository.update(id, updateUserDto);
+    }
+
+    async findByDeviceId(deviceId: string): Promise<User | null> {
+        return this.usersRepository.findOne({ where: { deviceId } });
+    }
+
+    async findGuestByDeviceId(deviceId: string): Promise<User | null> {
+        return this.usersRepository.findOne({
+            where: { deviceId, isGuest: true }
+        });
     }
 
     async createGuest(deviceId: string) {
@@ -36,19 +53,24 @@ export class UsersService {
         return savedUser;
     }
 
-    async findOne(email: string): Promise<User | null> {
-        return this.usersRepository.findOne({ where: { email } });
+    async create(createUserDto: RegisterDto) {
+        const user = this.usersRepository.create(createUserDto);
+        const savedUser = await this.usersRepository.save(user);
+
+        await this.settingsService.createDefault(savedUser);
+
+        return savedUser;
     }
 
-    async findOneByDeviceId(deviceId: string): Promise<User | null> {
-        return this.usersRepository.findOne({ where: { deviceId } });
-    }
-
-    async findById(id: string): Promise<User | null> {
+    async upgradeGuestToUser(id: string, userData: Partial<User>): Promise<User | null> {
+        await this.usersRepository.update(id, {
+            ...userData,
+            isGuest: false,
+        });
         return this.usersRepository.findOne({ where: { id } });
     }
 
-    async update(id: string, updateUserDto: any) {
-        return this.usersRepository.update(id, updateUserDto);
+    async save(user: User): Promise<User> {
+        return this.usersRepository.save(user);
     }
 }
