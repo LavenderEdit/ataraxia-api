@@ -1,8 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Setting } from './entities/setting.entity';
+import { Injectable } from '@nestjs/common';
+import { CreateSettingDto } from './dto/create-setting.dto';
 import { UpdateSettingDto } from './dto/update-setting.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Setting } from './entities/setting.entity';
+import { Repository } from 'typeorm';
+import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class SettingsService {
@@ -11,17 +13,50 @@ export class SettingsService {
         private settingsRepository: Repository<Setting>,
     ) { }
 
-    async findOne(userId: string): Promise<Setting> {
-        const settings = await this.settingsRepository.findOne({
-            where: { user: { id: userId } },
+    async createDefault(user: User) {
+        const defaultSettings = this.settingsRepository.create({
+            focusDuration: 25,
+            shortBreakDuration: 5,
+            longBreakDuration: 15,
+            notificationsEnabled: true,
+            soundEnabled: true,
+            user: user,
         });
-        if (!settings) throw new NotFoundException('Configuración no encontrada');
-        return settings;
+        return this.settingsRepository.save(defaultSettings);
     }
 
-    async update(userId: string, updateSettingDto: UpdateSettingDto): Promise<Setting> {
-        const settings = await this.findOne(userId);
-        Object.assign(settings, updateSettingDto);
-        return this.settingsRepository.save(settings);
+    async create(createSettingDto: CreateSettingDto, user: User) {
+        const existing = await this.findOne(user);
+        if (existing) {
+            return this.update(existing.id, createSettingDto, user);
+        }
+
+        const setting = this.settingsRepository.create({
+            ...createSettingDto,
+            user,
+        });
+        return this.settingsRepository.save(setting);
+    }
+
+    async findAll(user: User) {
+        return this.settingsRepository.find({ where: { user: { id: user.id } } });
+    }
+
+    async findOne(user: User) {
+        return this.settingsRepository.findOne({ where: { user: { id: user.id } } });
+    }
+
+    async update(id: string, updateSettingDto: UpdateSettingDto, user: User) {
+        const setting = await this.findOne(user);
+        if (!setting) {
+            return this.create(updateSettingDto as CreateSettingDto, user);
+        }
+
+        this.settingsRepository.merge(setting, updateSettingDto);
+        return this.settingsRepository.save(setting);
+    }
+
+    remove(id: number) {
+        return `This action removes a #${id} setting`;
     }
 }
