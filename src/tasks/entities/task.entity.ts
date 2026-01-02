@@ -1,7 +1,15 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+    Entity,
+    PrimaryGeneratedColumn,
+    Column,
+    CreateDateColumn,
+    ManyToOne,
+    OneToMany,
+} from 'typeorm';
 import { User } from '../../users/entities/user.entity';
+import { Timer } from '../../timers/entities/timer.entity';
 
-@Entity('tasks')
+@Entity()
 export class Task {
     @PrimaryGeneratedColumn('uuid')
     id: string;
@@ -9,19 +17,21 @@ export class Task {
     @Column()
     title: string;
 
+    @Column({ nullable: true })
+    description: string;
+
     @Column({ default: false })
     isCompleted: boolean;
+
+    @CreateDateColumn()
+    createdAt: Date;
 
     @Column({ nullable: true })
     userId: string;
 
     @ManyToOne(() => User, (user) => user.tasks, { onDelete: 'CASCADE' })
-    @JoinColumn({ name: 'userId' })
     user: User;
 
-    @CreateDateColumn()
-    createdAt: Date;
-
-    @UpdateDateColumn()
-    updatedAt: Date;
+    @OneToMany(() => Timer, (timer) => timer.task)
+    timers: Timer[];
 }
