@@ -2,6 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn, Up
 import { Timer } from '../../timers/entities/timer.entity';
 import { Task } from '../../tasks/entities/task.entity';
 import { Setting } from '../../settings/entities/setting.entity';
+import { Tag } from '../../tags/entities/tag.entity';
 
 @Entity('users')
 export class User {
@@ -28,6 +29,9 @@ export class User {
 
     @OneToMany(() => Task, (task) => task.user)
     tasks: Task[];
+
+    @OneToMany(() => Tag, (tag) => tag.user)
+    tags: Tag[];
 
     @OneToOne(() => Setting, (setting) => setting.user)
     settings: Setting;
