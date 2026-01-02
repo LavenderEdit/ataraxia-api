@@ -21,7 +21,6 @@ export class TasksController {
     @UseGuards(JwtAuthGuard)
     @Post()
     create(@Body() createTaskDto: CreateTaskDto, @Request() req) {
-        // Pasamos el usuario completo del request al servicio
         return this.tasksService.create(createTaskDto, req.user);
     }
 
