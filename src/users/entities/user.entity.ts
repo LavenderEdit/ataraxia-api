@@ -1,28 +1,38 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn, UpdateDateColumn, OneToOne } from 'typeorm';
+import {
+    Entity,
+    PrimaryGeneratedColumn,
+    Column,
+    CreateDateColumn,
+    UpdateDateColumn,
+    OneToMany,
+    OneToOne,
+} from 'typeorm';
 import { Timer } from '../../timers/entities/timer.entity';
 import { Task } from '../../tasks/entities/task.entity';
 import { Setting } from '../../settings/entities/setting.entity';
-import { Tag } from '../../tags/entities/tag.entity';
 
-@Entity('users')
+@Entity()
 export class User {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
     @Column({ unique: true, nullable: true })
-    name?: string;
-
-    @Column({ unique: true, nullable: true })
-    email?: string;
+    email: string;
 
     @Column({ nullable: true })
-    password?: string;
+    password: string;
 
     @Column({ nullable: true })
-    deviceId?: string;
+    deviceId: string;
 
     @Column({ default: false })
     isGuest: boolean;
+
+    @CreateDateColumn()
+    createdAt: Date;
+
+    @UpdateDateColumn()
+    updatedAt: Date;
 
     @OneToMany(() => Timer, (timer) => timer.user)
     timers: Timer[];
@@ -30,15 +40,6 @@ export class User {
     @OneToMany(() => Task, (task) => task.user)
     tasks: Task[];
 
-    @OneToMany(() => Tag, (tag) => tag.user)
-    tags: Tag[];
-
     @OneToOne(() => Setting, (setting) => setting.user)
-    settings: Setting;
-
-    @CreateDateColumn()
-    createdAt: Date;
-
-    @UpdateDateColumn()
-    updatedAt: Date;
+    setting: Setting;
 }
