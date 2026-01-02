@@ -1,13 +1,7 @@
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
-import {
-    Column,
-    CreateDateColumn,
-    Entity,
-    ManyToOne,
-    PrimaryGeneratedColumn,
-} from 'typeorm';
 
-@Entity()
+@Entity('timer')
 export class Timer {
     @PrimaryGeneratedColumn('uuid')
     id: string;
@@ -15,7 +9,7 @@ export class Timer {
     @Column({ nullable: true })
     tag: string;
 
-    @Column({ type: 'int' })
+    @Column()
     duration: number;
 
     @Column({ type: 'timestamp', nullable: true })
@@ -30,6 +24,10 @@ export class Timer {
     @CreateDateColumn()
     createdAt: Date;
 
+    @Column({ nullable: true })
+    userId: string;
+
     @ManyToOne(() => User, (user) => user.timers, { onDelete: 'CASCADE' })
+    @JoinColumn({ name: 'userId' })
     user: User;
 }

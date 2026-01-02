@@ -13,10 +13,12 @@ export class TimersService {
     ) { }
 
     async create(createTimerDto: CreateTimerDto, userId: string): Promise<Timer> {
-        const timer = this.timersRepository.create({
-            ...createTimerDto,
-            user: { id: userId },
-        });
+        const timer = new Timer();
+        Object.assign(timer, createTimerDto);
+        timer.user = { id: userId } as any;
+
+        timer.userId = userId;
+
         return this.timersRepository.save(timer);
     }
 
@@ -41,9 +43,13 @@ export class TimersService {
     async update(id: string, updateTimerDto: UpdateTimerDto, userId: string): Promise<Timer> {
         const timer = await this.findOne(id, userId);
 
-        const updatedTimer = Object.assign(timer, updateTimerDto);
+        const cleanDto = Object.fromEntries(
+            Object.entries(updateTimerDto).filter(([_, v]) => v !== undefined)
+        );
 
-        return this.timersRepository.save(updatedTimer);
+        Object.assign(timer, cleanDto);
+
+        return this.timersRepository.save(timer);
     }
 
     async remove(id: string, userId: string): Promise<void> {
