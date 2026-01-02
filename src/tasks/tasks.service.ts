@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Task } from './entities/task.entity';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Task } from './entities/task.entity';
+import { Repository } from 'typeorm';
+import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class TasksService {
@@ -12,42 +13,53 @@ export class TasksService {
         private tasksRepository: Repository<Task>,
     ) { }
 
-    async create(userId: string, createTaskDto: CreateTaskDto): Promise<Task> {
+    async create(createTaskDto: CreateTaskDto, user: User) {
         const task = this.tasksRepository.create({
             ...createTaskDto,
-            user: { id: userId },
+            user: user,
+            userId: user.id,
         });
-        return this.tasksRepository.save(task);
+
+        const savedTask = await this.tasksRepository.save(task);
+
+        return { ...savedTask, userId: user.id };
     }
 
-    async findAll(userId: string): Promise<Task[]> {
+    async findAll(user: User) {
         return this.tasksRepository.find({
-            where: { user: { id: userId } },
+            where: { user: { id: user.id } },
             order: { createdAt: 'DESC' },
         });
     }
 
-    async update(userId: string, taskId: string, updateTaskDto: UpdateTaskDto): Promise<Task> {
+    async findOne(id: string, user: User) {
         const task = await this.tasksRepository.findOne({
-            where: { id: taskId, user: { id: userId } },
+            where: { id, user: { id: user.id } },
         });
-
         if (!task) {
-            throw new NotFoundException('Tarea no encontrada o no tienes permisos');
+            throw new NotFoundException(`Task #${id} not found`);
         }
-
-        Object.assign(task, updateTaskDto);
-        return this.tasksRepository.save(task);
+        return task;
     }
 
-    async remove(userId: string, taskId: string): Promise<void> {
-        const result = await this.tasksRepository.delete({
-            id: taskId,
-            user: { id: userId },
+    async update(id: string, updateTaskDto: UpdateTaskDto, user: User) {
+        const task = await this.findOne(id, user);
+
+        const updatedTask = await this.tasksRepository.preload({
+            id: id,
+            ...updateTaskDto,
+            user: user,
         });
 
-        if (result.affected === 0) {
-            throw new NotFoundException('Tarea no encontrada');
+        if (!updatedTask) {
+            throw new NotFoundException(`Task #${id} not found`);
         }
+
+        return this.tasksRepository.save(updatedTask);
+    }
+
+    async remove(id: string, user: User) {
+        const task = await this.findOne(id, user);
+        return this.tasksRepository.remove(task);
     }
 }
