@@ -21,7 +21,7 @@ export class Task {
     description: string;
 
     @Column({ default: false })
-    isCompleted: boolean;
+    completed: boolean;
 
     @CreateDateColumn()
     createdAt: Date;
@@ -29,7 +29,10 @@ export class Task {
     @Column({ nullable: true })
     userId: string;
 
-    @ManyToOne(() => User, (user) => user.tasks, { onDelete: 'CASCADE' })
+    @Column({ nullable: true })
+    tag: string;
+
+    @ManyToOne(() => User, (user) => user.tasks)
     user: User;
 
     @OneToMany(() => Timer, (timer) => timer.task)

@@ -7,5 +7,6 @@ export class CreateTagDto {
 
     @IsOptional()
     @IsString()
+    @IsHexColor({ message: 'El color debe ser un código hexadecimal válido (ej. #FFFFFF)' })
     color?: string;
 }

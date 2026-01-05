@@ -10,22 +10,27 @@ export class TagsController {
     constructor(private readonly tagsService: TagsService) { }
 
     @Post()
-    create(@Request() req, @Body() createTagDto: CreateTagDto) {
-        return this.tagsService.create(req.user.sub, createTagDto);
+    create(@Body() createTagDto: CreateTagDto, @Request() req) {
+        return this.tagsService.create(createTagDto, req.user);
     }
 
     @Get()
     findAll(@Request() req) {
-        return this.tagsService.findAll(req.user.sub);
+        return this.tagsService.findAll(req.user);
+    }
+
+    @Get(':id')
+    findOne(@Param('id') id: string) {
+        return this.tagsService.findOne(id);
     }
 
     @Patch(':id')
-    update(@Request() req, @Param('id') id: string, @Body() updateTagDto: UpdateTagDto) {
-        return this.tagsService.update(id, req.user.sub, updateTagDto);
+    update(@Param('id') id: string, @Body() updateTagDto: UpdateTagDto, @Request() req) {
+        return this.tagsService.update(id, updateTagDto);
     }
 
     @Delete(':id')
-    remove(@Request() req, @Param('id') id: string) {
-        return this.tagsService.remove(id, req.user.sub);
+    remove(@Param('id') id: string, @Request() req) {
+        return this.tagsService.remove(id);
     }
 }
