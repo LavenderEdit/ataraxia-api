@@ -24,6 +24,12 @@ export class Setting {
     @Column({ default: 4 })
     longBreakInterval: number;
 
+    @Column({ default: 'light' })
+    theme: string;
+
+    @Column({ default: true })
+    soundEnabled: boolean;
+
     @OneToOne(() => User, (user) => user.setting, { onDelete: 'CASCADE' })
     @JoinColumn()
     user: User;

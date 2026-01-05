@@ -1,4 +1,4 @@
-import { IsBoolean, IsNumber, IsOptional, Min } from 'class-validator';
+import { IsBoolean, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 
 export class CreateSettingDto {
     @IsOptional()
@@ -28,4 +28,12 @@ export class CreateSettingDto {
     @IsNumber()
     @Min(1)
     longBreakInterval?: number;
+
+    @IsOptional()
+    @IsString()
+    theme?: string;
+
+    @IsOptional()
+    @IsBoolean()
+    soundEnabled?: boolean;
 }
