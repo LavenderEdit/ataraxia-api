@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Tag } from './entities/tag.entity';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
+import { Tag } from './entities/tag.entity';
+import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class TagsService {
@@ -12,40 +13,31 @@ export class TagsService {
         private tagsRepository: Repository<Tag>,
     ) { }
 
-    async create(userId: string, createTagDto: CreateTagDto): Promise<Tag> {
+    async create(createTagDto: CreateTagDto, user: User) {
         const tag = this.tagsRepository.create({
             ...createTagDto,
-            user: { id: userId },
+            user,
         });
         return this.tagsRepository.save(tag);
     }
 
-    async findAll(userId: string): Promise<Tag[]> {
-        return this.tagsRepository.find({
-            where: { user: { id: userId } },
-            order: { name: 'ASC' },
-        });
+    async findAll(user: User) {
+        return this.tagsRepository.find({ where: { user: { id: user.id } } });
     }
 
-    async findOne(id: string, userId: string): Promise<Tag> {
-        const tag = await this.tagsRepository.findOne({
-            where: { id, user: { id: userId } },
-        });
-        if (!tag) throw new NotFoundException(`Tag #${id} no encontrada`);
-        return tag;
+    async findOne(id: string) {
+        return this.tagsRepository.findOne({ where: { id } });
     }
 
-    async update(id: string, userId: string, updateTagDto: UpdateTagDto): Promise<Tag> {
-        const tag = await this.findOne(id, userId);
-        Object.assign(tag, updateTagDto);
-        return this.tagsRepository.save(tag);
+    async update(id: string, updateTagDto: UpdateTagDto) {
+        if (Object.keys(updateTagDto).length === 0) {
+            return this.tagsRepository.findOne({ where: { id } });
+        }
+        await this.tagsRepository.update(id, updateTagDto);
+        return this.tagsRepository.findOne({ where: { id } });
     }
 
-    async remove(id: string, userId: string): Promise<void> {
-        const result = await this.tagsRepository.delete({
-            id,
-            user: { id: userId },
-        });
-        if (result.affected === 0) throw new NotFoundException(`Tag #${id} no encontrada`);
+    async remove(id: string) {
+        return this.tagsRepository.delete(id);
     }
 }

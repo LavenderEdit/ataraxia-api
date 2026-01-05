@@ -39,7 +39,6 @@ export class SettingsService {
     }
 
     async findOne(user: User) {
-        // [FIX] Validación defensiva: Evita el crash "Cannot read properties of undefined (reading 'id')"
         if (!user || !user.id) {
             throw new BadRequestException('Usuario no válido o ID no encontrado al buscar configuraciones');
         }
@@ -48,7 +47,6 @@ export class SettingsService {
             where: { user: { id: user.id } }
         });
 
-        // Opcional: Si el usuario existe pero no tiene settings (raro, pero posible), devolver error 404
         if (!setting) {
             throw new NotFoundException(`No se encontraron configuraciones para el usuario ${user.id}`);
         }
@@ -57,6 +55,10 @@ export class SettingsService {
     }
 
     async update(id: string, updateSettingDto: UpdateSettingDto) {
+        if (Object.keys(updateSettingDto).length === 0) {
+            return this.settingsRepository.findOne({ where: { id } });
+        }
+
         await this.settingsRepository.update(id, updateSettingDto);
         return this.settingsRepository.findOne({ where: { id } });
     }
