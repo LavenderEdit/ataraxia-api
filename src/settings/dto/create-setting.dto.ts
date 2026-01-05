@@ -1,23 +1,31 @@
-import { IsBoolean, IsNumber, IsOptional } from 'class-validator';
+import { IsBoolean, IsNumber, IsOptional, Min } from 'class-validator';
 
 export class CreateSettingDto {
-    @IsNumber()
     @IsOptional()
+    @IsNumber()
+    @Min(1)
     focusDuration?: number;
 
-    @IsNumber()
     @IsOptional()
+    @IsNumber()
+    @Min(1)
     shortBreakDuration?: number;
 
-    @IsNumber()
     @IsOptional()
+    @IsNumber()
+    @Min(1)
     longBreakDuration?: number;
 
-    @IsBoolean()
     @IsOptional()
-    notificationsEnabled?: boolean;
+    @IsBoolean()
+    autoStartBreaks?: boolean;
 
-    @IsBoolean()
     @IsOptional()
-    soundEnabled?: boolean;
+    @IsBoolean()
+    autoStartPomodoros?: boolean;
+
+    @IsOptional()
+    @IsNumber()
+    @Min(1)
+    longBreakInterval?: number;
 }

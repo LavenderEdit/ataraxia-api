@@ -1,10 +1,4 @@
-import {
-    Entity,
-    PrimaryGeneratedColumn,
-    Column,
-    OneToOne,
-    JoinColumn,
-} from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 
 @Entity()
@@ -21,11 +15,14 @@ export class Setting {
     @Column({ default: 15 })
     longBreakDuration: number;
 
-    @Column({ default: true })
-    notificationsEnabled: boolean;
+    @Column({ default: false })
+    autoStartBreaks: boolean;
 
-    @Column({ default: true })
-    soundEnabled: boolean;
+    @Column({ default: false })
+    autoStartPomodoros: boolean;
+
+    @Column({ default: 4 })
+    longBreakInterval: number;
 
     @OneToOne(() => User, (user) => user.setting, { onDelete: 'CASCADE' })
     @JoinColumn()

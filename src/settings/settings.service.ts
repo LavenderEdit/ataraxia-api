@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Setting } from './entities/setting.entity';
 import { CreateSettingDto } from './dto/create-setting.dto';
 import { UpdateSettingDto } from './dto/update-setting.dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Setting } from './entities/setting.entity';
-import { Repository } from 'typeorm';
 import { User } from '../users/entities/user.entity';
 
 @Injectable()
@@ -13,24 +13,7 @@ export class SettingsService {
         private settingsRepository: Repository<Setting>,
     ) { }
 
-    async createDefault(user: User) {
-        const defaultSettings = this.settingsRepository.create({
-            focusDuration: 25,
-            shortBreakDuration: 5,
-            longBreakDuration: 15,
-            notificationsEnabled: true,
-            soundEnabled: true,
-            user: user,
-        });
-        return this.settingsRepository.save(defaultSettings);
-    }
-
     async create(createSettingDto: CreateSettingDto, user: User) {
-        const existing = await this.findOne(user);
-        if (existing) {
-            return this.update(existing.id, createSettingDto, user);
-        }
-
         const setting = this.settingsRepository.create({
             ...createSettingDto,
             user,
@@ -38,25 +21,47 @@ export class SettingsService {
         return this.settingsRepository.save(setting);
     }
 
-    async findAll(user: User) {
-        return this.settingsRepository.find({ where: { user: { id: user.id } } });
+    async createDefault(user: User) {
+        const defaultSettings = this.settingsRepository.create({
+            focusDuration: 25,
+            shortBreakDuration: 5,
+            longBreakDuration: 15,
+            autoStartBreaks: false,
+            autoStartPomodoros: false,
+            longBreakInterval: 4,
+            user: user,
+        });
+        return this.settingsRepository.save(defaultSettings);
+    }
+
+    async findAll() {
+        return this.settingsRepository.find();
     }
 
     async findOne(user: User) {
-        return this.settingsRepository.findOne({ where: { user: { id: user.id } } });
-    }
-
-    async update(id: string, updateSettingDto: UpdateSettingDto, user: User) {
-        const setting = await this.findOne(user);
-        if (!setting) {
-            return this.create(updateSettingDto as CreateSettingDto, user);
+        // [FIX] Validación defensiva: Evita el crash "Cannot read properties of undefined (reading 'id')"
+        if (!user || !user.id) {
+            throw new BadRequestException('Usuario no válido o ID no encontrado al buscar configuraciones');
         }
 
-        this.settingsRepository.merge(setting, updateSettingDto);
-        return this.settingsRepository.save(setting);
+        const setting = await this.settingsRepository.findOne({
+            where: { user: { id: user.id } }
+        });
+
+        // Opcional: Si el usuario existe pero no tiene settings (raro, pero posible), devolver error 404
+        if (!setting) {
+            throw new NotFoundException(`No se encontraron configuraciones para el usuario ${user.id}`);
+        }
+
+        return setting;
     }
 
-    remove(id: number) {
-        return `This action removes a #${id} setting`;
+    async update(id: string, updateSettingDto: UpdateSettingDto) {
+        await this.settingsRepository.update(id, updateSettingDto);
+        return this.settingsRepository.findOne({ where: { id } });
+    }
+
+    async remove(id: string) {
+        return this.settingsRepository.delete(id);
     }
 }
