@@ -11,6 +11,11 @@ Desarrollada con **NestJS**, esta API ofrece un ecosistema completo para el mane
 
 ---
 
+## Documentación en ingles
+[README in english](README.en.md)
+
+---
+
 ## 🚀 Características del Sistema
 
 - **Arquitectura Modular**  
