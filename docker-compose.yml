@@ -11,10 +11,11 @@ services:
     volumes:
       - .:/app
       - /app/node_modules
-    command: npm run start:dev
+    command: npm run start:prod
+    restart: unless-stopped
     networks:
       - portfolio_default
 
 networks:
   portfolio_default:
-    driver: bridge
+    external: true
