@@ -27,6 +27,9 @@ export class User {
     @Column({ nullable: true })
     deviceId: string;
 
+    @Column({ nullable: true, select: false })
+    currentHashedRefreshToken: string;
+
     @CreateDateColumn()
     createdAt: Date;
 

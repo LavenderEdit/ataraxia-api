@@ -1,15 +1,17 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { RegisterDto } from './dto/register.dto';
 import * as bcrypt from 'bcrypt';
 import { GuestLoginDto } from './dto/guest-login.dto';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
     constructor(
         private usersService: UsersService,
         private jwtService: JwtService,
+        private configService: ConfigService,
     ) { }
 
     async validateUser(email: string, pass: string): Promise<any> {
@@ -21,13 +23,44 @@ export class AuthService {
         return null;
     }
 
-    async login(user: any) {
-        const payload = { username: user.email, sub: user.id, isGuest: user.isGuest };
+    // Método auxiliar para generar ambos tokens
+    async getTokens(userId: string, email: string, isGuest: boolean) {
+        const payload = { sub: userId, username: email, isGuest };
+
+        const [at, rt] = await Promise.all([
+            this.jwtService.signAsync(payload, {
+                secret: this.configService.get<string>('JWT_SECRET'),
+                expiresIn: '15m', // Access Token corto (15 min)
+            }),
+            this.jwtService.signAsync(payload, {
+                secret: this.configService.get<string>('JWT_REFRESH_SECRET') || 'fallback_refresh_secret',
+                expiresIn: '7d', // Refresh Token largo (7 días)
+            }),
+        ]);
+
         return {
-            access_token: this.jwtService.sign(payload),
+            access_token: at,
+            refresh_token: rt,
+        };
+    }
+
+    // Guardar el hash del refresh token en la DB
+    async updateRefreshTokenHash(userId: string, refreshToken: string) {
+        const hash = await bcrypt.hash(refreshToken, 10);
+        await this.usersService.update(userId, {
+            currentHashedRefreshToken: hash
+        });
+    }
+
+    async login(user: any) {
+        const tokens = await this.getTokens(user.id, user.email, user.isGuest);
+        await this.updateRefreshTokenHash(user.id, tokens.refresh_token);
+
+        return {
+            ...tokens,
             user: {
                 id: user.id,
-                name: user.firstName || user.email, // Ajuste para que no falle si no tiene name
+                name: user.firstName || user.email,
                 email: user.email,
                 isGuest: user.isGuest
             }
@@ -38,18 +71,40 @@ export class AuthService {
         let user = await this.usersService.findGuestByDeviceId(guestLoginDto.deviceId);
 
         if (!user) {
-            // Ahora createGuest devuelve User garantizado, no array
-            user = await this.usersService.createGuest(
-                guestLoginDto.deviceId
-            );
+            user = await this.usersService.createGuest(guestLoginDto.deviceId);
         }
 
-        // TypeScript ahora sabe que user es User y tiene deviceId
-        const payload = { sub: user.id, deviceId: user.deviceId, isGuest: true };
+        const tokens = await this.getTokens(user.id, user.email, true);
+        await this.updateRefreshTokenHash(user.id, tokens.refresh_token);
+
         return {
-            access_token: this.jwtService.sign(payload),
+            ...tokens,
             user: { id: user.id, isGuest: true }
         };
+    }
+
+    async logout(userId: string) {
+        await this.usersService.update(userId, { currentHashedRefreshToken: null });
+        return { message: 'Logged out successfully' };
+    }
+
+    async refreshTokens(userId: string, refreshToken: string) {
+        const user = await this.usersService.findById(userId);
+        if (!user || !user.currentHashedRefreshToken)
+            throw new ForbiddenException('Access Denied');
+
+        const refreshTokenMatches = await bcrypt.compare(
+            refreshToken,
+            user.currentHashedRefreshToken,
+        );
+
+        if (!refreshTokenMatches)
+            throw new ForbiddenException('Access Denied');
+
+        const tokens = await this.getTokens(user.id, user.email, user.isGuest);
+        await this.updateRefreshTokenHash(user.id, tokens.refresh_token);
+
+        return tokens;
     }
 
     async register(registerDto: RegisterDto) {
@@ -67,7 +122,7 @@ export class AuthService {
                 const upgradedUser = await this.usersService.upgradeGuestToUser(existingGuest.id, {
                     email: registerDto.email,
                     password: hashedPassword,
-                    firstName: registerDto.firstName, // Asumiendo que vienen en el DTO
+                    firstName: registerDto.firstName,
                     lastName: registerDto.lastName,
                 });
 
