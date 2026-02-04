@@ -5,11 +5,12 @@ import {
     CreateDateColumn,
     ManyToOne,
     JoinColumn,
+    Index
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Task } from '../../tasks/entities/task.entity';
 
-@Entity()
+@Entity('timers')
 export class Timer {
     @PrimaryGeneratedColumn('uuid')
     id: string;
@@ -29,17 +30,23 @@ export class Timer {
     @Column({ nullable: true })
     tag: string;
 
+    @Index()
+    @Column({ nullable: true })
+    userId: string;
+
     @ManyToOne(() => User, (user) => user.timers, { onDelete: 'CASCADE' })
+    @JoinColumn({ name: 'userId' })
     user: User;
 
-    // ESTO FALTABA: La relación con Task
+    // OPTIMIZACIÓN v0.2: Índice para calcular tiempo total por tarea rápidamente
+    @Index()
+    @Column({ nullable: true })
+    taskId: string;
+
     @ManyToOne(() => Task, (task) => task.timers, {
         nullable: true,
         onDelete: 'SET NULL',
     })
-    @JoinColumn({ name: 'taskId' }) // Esto ayuda a que TypeORM mapee automáticamente taskId del DTO
+    @JoinColumn({ name: 'taskId' })
     task: Task;
-
-    @Column({ nullable: true })
-    taskId: string; // Columna explícita para facilitar lecturas
 }

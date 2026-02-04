@@ -5,11 +5,14 @@ import {
     CreateDateColumn,
     ManyToOne,
     OneToMany,
+    Index,
+    DeleteDateColumn,
+    JoinColumn
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Timer } from '../../timers/entities/timer.entity';
 
-@Entity()
+@Entity('tasks')
 export class Task {
     @PrimaryGeneratedColumn('uuid')
     id: string;
@@ -26,15 +29,22 @@ export class Task {
     @CreateDateColumn()
     createdAt: Date;
 
+    @Index()
     @Column({ nullable: true })
     userId: string;
 
     @Column({ nullable: true })
     tag: string;
 
-    @ManyToOne(() => User, (user) => user.tasks)
+    // Relación vinculada a la columna explícita userId
+    @ManyToOne(() => User, (user) => user.tasks, { onDelete: 'CASCADE' })
+    @JoinColumn({ name: 'userId' })
     user: User;
 
     @OneToMany(() => Timer, (timer) => timer.task)
     timers: Timer[];
+
+    // NUEVO v0.2: Soft Delete
+    @DeleteDateColumn()
+    deletedAt: Date;
 }
