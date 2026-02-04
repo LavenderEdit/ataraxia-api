@@ -14,14 +14,18 @@ export class SettingsService {
     ) { }
 
     async create(createSettingDto: CreateSettingDto, user: User) {
+        // Aseguramos que tenga una plataforma por defecto si no viene en el DTO
+        const platform = createSettingDto.platform || 'web';
+
         const setting = this.settingsRepository.create({
             ...createSettingDto,
+            platform,
             user,
         });
         return this.settingsRepository.save(setting);
     }
 
-    async createDefault(user: User) {
+    async createDefault(user: User, platform: string = 'web') {
         const defaultSettings = this.settingsRepository.create({
             focusDuration: 25,
             shortBreakDuration: 5,
@@ -29,6 +33,9 @@ export class SettingsService {
             autoStartBreaks: false,
             autoStartPomodoros: false,
             longBreakInterval: 4,
+            soundEnabled: true,
+            theme: 'light',
+            platform: platform,
             user: user,
         });
         return this.settingsRepository.save(defaultSettings);
@@ -38,17 +45,22 @@ export class SettingsService {
         return this.settingsRepository.find();
     }
 
-    async findOne(user: User) {
+    // Busca por usuario Y plataforma. Si no existe, la crea (Self-healing).
+    // Esto evita errores 404 cuando el usuario cambia de dispositivo.
+    async findOne(user: User, platform: string = 'web') {
         if (!user || !user.id) {
             throw new BadRequestException('Usuario no válido o ID no encontrado al buscar configuraciones');
         }
 
         const setting = await this.settingsRepository.findOne({
-            where: { user: { id: user.id } }
+            where: {
+                user: { id: user.id },
+                platform: platform
+            }
         });
 
         if (!setting) {
-            throw new NotFoundException(`No se encontraron configuraciones para el usuario ${user.id}`);
+            return this.createDefault(user, platform);
         }
 
         return setting;
@@ -56,14 +68,27 @@ export class SettingsService {
 
     async update(id: string, updateSettingDto: UpdateSettingDto) {
         if (Object.keys(updateSettingDto).length === 0) {
-            return this.settingsRepository.findOne({ where: { id } });
+            return this.settingsRepository.findOne({ where: { id: +id } });
         }
 
         await this.settingsRepository.update(id, updateSettingDto);
-        return this.settingsRepository.findOne({ where: { id } });
+        return this.settingsRepository.findOne({ where: { id: +id } });
     }
 
     async remove(id: string) {
         return this.settingsRepository.delete(id);
+    }
+
+    async updateByUser(user: User, updateSettingDto: UpdateSettingDto) {
+        const platform = updateSettingDto.platform || 'web';
+
+        // 1. Buscamos (o creamos si no existe) la configuración para esa plataforma
+        const setting = await this.findOne(user, platform);
+
+        // 2. Actualizamos esa configuración específica
+        // Usamos assign para mezclar los datos nuevos sobre la entidad existente
+        Object.assign(setting, updateSettingDto);
+
+        return this.settingsRepository.save(setting);
     }
 }

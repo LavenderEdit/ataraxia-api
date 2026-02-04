@@ -1,23 +1,4 @@
-import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
+import { PartialType } from '@nestjs/mapped-types';
+import { CreateSettingDto } from './create-setting.dto';
 
-export class UpdateSettingDto {
-    @IsOptional()
-    @IsNumber()
-    focusDuration?: number;
-
-    @IsOptional()
-    @IsNumber()
-    shortBreakDuration?: number;
-
-    @IsOptional()
-    @IsNumber()
-    longBreakDuration?: number;
-
-    @IsOptional()
-    @IsString()
-    theme?: string;
-
-    @IsOptional()
-    @IsBoolean()
-    soundEnabled?: boolean;
-}
+export class UpdateSettingDto extends PartialType(CreateSettingDto) { }

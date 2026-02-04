@@ -1,10 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, Index } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 
-@Entity()
+@Entity('settings')
+@Index(['user', 'platform'], { unique: true })
 export class Setting {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+    @PrimaryGeneratedColumn()
+    id: number;
 
     @Column({ default: 25 })
     focusDuration: number;
@@ -30,7 +31,12 @@ export class Setting {
     @Column({ default: true })
     soundEnabled: boolean;
 
-    @OneToOne(() => User, (user) => user.setting, { onDelete: 'CASCADE' })
-    @JoinColumn()
+    // ✨ NUEVO: Para soporte multiplataforma
+    @Column({ default: 'web' })
+    platform: string; // 'web', 'mobile', 'desktop'
+
+    // CAMBIO: De OneToOne a ManyToOne
+    // Un usuario tiene muchas configuraciones (una por plataforma)
+    @ManyToOne(() => User, (user) => user.settings, { onDelete: 'CASCADE' })
     user: User;
 }

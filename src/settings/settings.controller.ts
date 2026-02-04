@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request, UnauthorizedException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request, Query } from '@nestjs/common';
+
 import { SettingsService } from './settings.service';
 import { CreateSettingDto } from './dto/create-setting.dto';
 import { UpdateSettingDto } from './dto/update-setting.dto';
@@ -15,11 +16,18 @@ export class SettingsController {
     }
 
     @Get()
-    findOne(@Request() req) {
-        if (!req.user) {
-            throw new UnauthorizedException('No se pudo identificar al usuario en la petición (req.user es undefined)');
-        }
-        return this.settingsService.findOne(req.user);
+    findOne(@Request() req, @Query('platform') platform?: string) {
+        return this.settingsService.findOne(req.user, platform);
+    }
+
+    @Patch()
+    updateByUser(@Request() req, @Body() updateSettingDto: UpdateSettingDto) {
+        return this.settingsService.updateByUser(req.user, updateSettingDto);
+    }
+
+    @Get('all')
+    findAll() {
+        return this.settingsService.findAll();
     }
 
     @Patch(':id')
