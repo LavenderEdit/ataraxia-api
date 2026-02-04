@@ -1,10 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { User } from '../users/entities/user.entity';
+import { AchievementsService } from './achievements.service';
 
 @Injectable()
 export class GamificationService {
-    constructor(private readonly usersService: UsersService) { }
+    constructor(
+        private readonly usersService: UsersService,
+        private readonly achievementsService: AchievementsService, // ✨ Inyectamos
+    ) { }
 
     async registerActivity(userId: string): Promise<User | null> {
         const user = await this.usersService.findById(userId);
@@ -44,18 +48,26 @@ export class GamificationService {
             lastActiveAt: now,
         });
 
-        return this.usersService.findById(user.id);
+        const updatedUser = await this.usersService.findById(user.id);
+        if (updatedUser) {
+            await this.achievementsService.checkStreakAchievements(updatedUser, newCurrentStreak);
+        }
+
+        return updatedUser;
     }
 
     async getUserStats(userId: string) {
         const user = await this.usersService.findById(userId);
         if (!user) return null;
 
+        const achievements = await this.achievementsService.getUserAchievements(userId);
+
         return {
             currentStreak: user.currentStreak || 0,
             longestStreak: user.longestStreak || 0,
             lastActiveAt: user.lastActiveAt,
             level: Math.floor((user.currentStreak || 0) / 5) + 1,
+            achievements,
         };
     }
 }
