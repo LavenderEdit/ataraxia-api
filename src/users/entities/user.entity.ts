@@ -30,6 +30,15 @@ export class User {
     @Column({ nullable: true, select: false })
     currentHashedRefreshToken: string;
 
+    @Column({ default: 0 })
+    currentStreak: number;
+
+    @Column({ default: 0 })
+    longestStreak: number;
+
+    @Column({ nullable: true })
+    lastActiveAt: Date;
+
     @CreateDateColumn()
     createdAt: Date;
 
