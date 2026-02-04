@@ -5,12 +5,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Task } from './entities/task.entity';
 import { Repository } from 'typeorm';
 import { User } from '../users/entities/user.entity';
+import { GamificationService } from 'src/gamification/gamification.service';
 
 @Injectable()
 export class TasksService {
     constructor(
         @InjectRepository(Task)
         private tasksRepository: Repository<Task>,
+        private gamificationService: GamificationService, // ✨ Inyectamos
     ) { }
 
     async create(createTaskDto: CreateTaskDto, user: User) {
@@ -45,21 +47,16 @@ export class TasksService {
     async update(id: string, updateTaskDto: UpdateTaskDto, user: User) {
         const task = await this.findOne(id, user);
 
-        const updatedTask = await this.tasksRepository.preload({
-            id: id,
-            ...updateTaskDto,
-            user: user,
-        });
-
-        if (!updatedTask) {
-            throw new NotFoundException(`Task #${id} not found`);
+        if (updateTaskDto.completed === true && !task.completed) {
+            await this.gamificationService.registerActivity(user.id);
         }
 
-        return this.tasksRepository.save(updatedTask);
+        Object.assign(task, updateTaskDto);
+        return this.tasksRepository.save(task);
     }
 
     async remove(id: string, user: User) {
         const task = await this.findOne(id, user);
-        return this.tasksRepository.remove(task);
+        return this.tasksRepository.softRemove(task);
     }
 }

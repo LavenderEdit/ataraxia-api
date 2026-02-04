@@ -14,6 +14,7 @@ import { TagsModule } from './tags/tags.module';
 import { SettingsModule } from './settings/settings.module';
 import { HomeModule } from './home/home.module';
 import { dataSourceOptions } from './database/data-source';
+import { GamificationModule } from './gamification/gamification.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { dataSourceOptions } from './database/data-source';
     TagsModule,
     SettingsModule,
     HomeModule,
+    GamificationModule,
   ],
   controllers: [AppController],
   providers: [
