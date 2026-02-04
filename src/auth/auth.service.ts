@@ -27,7 +27,7 @@ export class AuthService {
             access_token: this.jwtService.sign(payload),
             user: {
                 id: user.id,
-                name: user.name,
+                name: user.firstName || user.email, // Ajuste para que no falle si no tiene name
                 email: user.email,
                 isGuest: user.isGuest
             }
@@ -38,11 +38,13 @@ export class AuthService {
         let user = await this.usersService.findGuestByDeviceId(guestLoginDto.deviceId);
 
         if (!user) {
+            // Ahora createGuest devuelve User garantizado, no array
             user = await this.usersService.createGuest(
                 guestLoginDto.deviceId
             );
         }
 
+        // TypeScript ahora sabe que user es User y tiene deviceId
         const payload = { sub: user.id, deviceId: user.deviceId, isGuest: true };
         return {
             access_token: this.jwtService.sign(payload),
@@ -65,6 +67,8 @@ export class AuthService {
                 const upgradedUser = await this.usersService.upgradeGuestToUser(existingGuest.id, {
                     email: registerDto.email,
                     password: hashedPassword,
+                    firstName: registerDto.firstName, // Asumiendo que vienen en el DTO
+                    lastName: registerDto.lastName,
                 });
 
                 return this.login(upgradedUser);

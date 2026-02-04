@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
-import { RegisterDto } from 'src/auth/dto/register.dto';
 import { SettingsService } from '../settings/settings.service';
 
 @Injectable()
@@ -39,7 +38,7 @@ export class UsersService {
         });
     }
 
-    async createGuest(deviceId: string) {
+    async createGuest(deviceId: string): Promise<User> {
         const user = this.usersRepository.create({
             deviceId,
             isGuest: true,
@@ -53,8 +52,8 @@ export class UsersService {
         return savedUser;
     }
 
-    async create(createUserDto: RegisterDto) {
-        const user = this.usersRepository.create(createUserDto);
+    async create(userData: Partial<User>): Promise<User> {
+        const user = this.usersRepository.create(userData);
         const savedUser = await this.usersRepository.save(user);
 
         await this.settingsService.createDefault(savedUser);

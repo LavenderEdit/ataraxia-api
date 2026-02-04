@@ -3,7 +3,11 @@ import { IsEmail, IsNotEmpty, IsString, MinLength, IsOptional } from 'class-vali
 export class RegisterDto {
     @IsNotEmpty({ message: 'El nombre es obligatorio' })
     @IsString()
-    name: string;
+    firstName: string;
+
+    @IsOptional()
+    @IsString()
+    lastName?: string;
 
     @IsEmail({}, { message: 'El correo electrónico no es válido' })
     email: string;
