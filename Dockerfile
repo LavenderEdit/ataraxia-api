@@ -10,13 +10,21 @@ COPY . .
 
 RUN npm run build
 
-FROM node:20-alpine
+FROM node:20-alpine AS production
 
-WORKDIR /app
+WORKDIR /usr/src/app
 
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package*.json ./
+ENV NODE_ENV=production
+
+COPY package*.json ./
+
+RUN npm ci --only=production
+
+COPY --from=builder /usr/src/app/dist ./dist
+
+# Copiamos migraciones y configuraciones necesarias
+COPY --from=builder /usr/src/app/src/database/migrations ./src/database/migrations
+COPY --from=builder /usr/src/app/nest-cli.json ./
 
 EXPOSE 8081
 
