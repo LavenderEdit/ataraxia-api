@@ -1,6 +1,9 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
+
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
@@ -17,11 +20,22 @@ import { dataSourceOptions } from './database/data-source';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+
+    // Seguridad: Rate Limiting 
+    // Límite: 10 peticiones (limit) cada 60 segundos (ttl) por IP
+    ThrottlerModule.forRoot([{
+      ttl: 60000,
+      limit: 10,
+    }]),
+
+    // Base de Datos
     TypeOrmModule.forRoot({
       ...dataSourceOptions,
       autoLoadEntities: true,
       synchronize: process.env.NODE_ENV === 'development',
     }),
+
+    // Módulos de la Aplicación
     AuthModule,
     UsersModule,
     TasksModule,
@@ -31,6 +45,12 @@ import { dataSourceOptions } from './database/data-source';
     HomeModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule { }
