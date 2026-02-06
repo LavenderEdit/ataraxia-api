@@ -16,12 +16,26 @@ export class UsersService {
         return this.usersRepository.findOne({ where: { email } });
     }
 
+    async findByEmailWithPassword(email: string): Promise<User | null> {
+        return this.usersRepository.createQueryBuilder('user')
+            .where('user.email = :email', { email })
+            .addSelect('user.password')
+            .getOne();
+    }
+
     async findOne(id: string): Promise<User | null> {
         return this.usersRepository.findOne({ where: { id } });
     }
 
     async findById(id: string): Promise<User | null> {
         return this.usersRepository.findOne({ where: { id } });
+    }
+
+    async findByIdWithRefreshToken(id: string): Promise<User | null> {
+        return this.usersRepository.createQueryBuilder('user')
+            .where('user.id = :id', { id })
+            .addSelect('user.currentHashedRefreshToken')
+            .getOne();
     }
 
     async update(id: string, updateUserDto: any) {
@@ -43,12 +57,11 @@ export class UsersService {
             deviceId,
             isGuest: true,
             email: `guest_${deviceId}@ataraxia.temp`,
+            password: `guest_pwd_${deviceId}`,
         });
 
         const savedUser = await this.usersRepository.save(user);
-
         await this.settingsService.createDefault(savedUser);
-
         return savedUser;
     }
 

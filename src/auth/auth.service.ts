@@ -15,7 +15,8 @@ export class AuthService {
     ) { }
 
     async validateUser(email: string, pass: string): Promise<any> {
-        const user = await this.usersService.findByEmail(email);
+        const user = await this.usersService.findByEmailWithPassword(email);
+
         if (user && user.password && (await bcrypt.compare(pass, user.password))) {
             const { password, ...result } = user;
             return result;
@@ -30,11 +31,11 @@ export class AuthService {
         const [at, rt] = await Promise.all([
             this.jwtService.signAsync(payload, {
                 secret: this.configService.get<string>('JWT_SECRET'),
-                expiresIn: '15m', // Access Token corto (15 min)
+                expiresIn: '15m',
             }),
             this.jwtService.signAsync(payload, {
-                secret: this.configService.get<string>('JWT_REFRESH_SECRET') || 'fallback_refresh_secret',
-                expiresIn: '7d', // Refresh Token largo (7 días)
+                secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+                expiresIn: '7d',
             }),
         ]);
 
@@ -89,7 +90,8 @@ export class AuthService {
     }
 
     async refreshTokens(userId: string, refreshToken: string) {
-        const user = await this.usersService.findById(userId);
+        const user = await this.usersService.findByIdWithRefreshToken(userId);
+
         if (!user || !user.currentHashedRefreshToken)
             throw new ForbiddenException('Access Denied');
 
