@@ -4,156 +4,174 @@
   </a>
 </p>
 
-# 🌌 Ataraxia API
+# 🌌 Ataraxia API - v0.2
 
-**Ataraxia API** is a high-performance backend infrastructure designed to centralize personal productivity management.  
-Developed with **NestJS**, this API provides a comprehensive ecosystem for task management, time tracking via timers, and organization through tags, all protected by a robust authentication system.
+High-performance backend infrastructure for personal productivity and gamification.
 
----
+**Ataraxia API** is the core of a platform designed to help users manage their time and tasks through techniques like **Pomodoro**, powered by a **gamification system** that rewards consistency.
 
-## Documentation in spanish
-[README en español](README.md)
+Built with **NestJS** and **MySQL**, version **v0.2** introduces a scalable architecture, robust security, and optimized deployment with **Docker**.
 
 ---
 
-## 🚀 System Features
+## 📄 Documentation
 
-- **Modular Architecture**  
-  Clean separation of concerns (`Tasks`, `Tags`, `Timers`, `Auth`, `Settings`).
-
-- **Enterprise-Grade Security**  
-  Route protection using **JWT** and strict data schema validation.
-
-- **Smart Persistence**  
-  Engineered for seamless integration with relational databases, ensuring user data integrity.
-
-- **Flexible Productivity**  
-  Support for traditional workflows and deep work sessions (**Pomodoro**).
+- 📘 [Leer este README en Español](README.md)
+- 📑 [Interactive Documentation (Swagger)](https://ataraxia-api.studios-tkoh.online/docs)
 
 ---
 
-## 🛣️ Detailed API Documentation
+## 🚀 Key Features (v0.2)
 
-> All endpoints (except registration and login) require a **Bearer JWT** token in the request header:
+### 🎮 Gamification & Achievements
 
-```http
-Authorization: Bearer <token>
-````
+- **Streak System:**  
+  Automatic calculation of daily user activity streaks.
 
----
+- **Unlockable Achievements:**  
+  Reward system based on milestones (e.g., *"First Pomodoro"*, *"7-Day Streak"*).
 
-## 🔐 Authentication Module (`/auth`)
-
-Manages user access and identity.
-
-| Method | Endpoint            | Body (JSON)                 | Description                                       |
-| ------ | ------------------- | --------------------------- | ------------------------------------------------- |
-| POST   | `/auth/register`    | `{ email, password, name }` | Creates a new user account                        |
-| POST   | `/auth/login`       | `{ email, password }`       | Validates credentials and returns a JWT token     |
-| POST   | `/auth/guest-login` | `{ deviceId }`              | Enables temporary guest access linked to a device |
+- **Google Drive Integration:**  
+  Achievement icons and badges served dynamically from Drive.
 
 ---
 
-## 📋 Task Module (`/tasks`)
+### 🛡️ Enterprise-Grade Security
 
-Central control for user activities and to-dos.
+- **Dual JWT Authentication:**  
+  Secure sessions using short-lived Access Tokens (15 min) and persistent Refresh Tokens (7 days).
 
-| Method | Endpoint     | Body / Parameters                                                | Description                                  |
-| ------ | ------------ | ---------------------------------------------------------------- | -------------------------------------------- |
-| GET    | `/tasks`     | —                                                                | Fetches all tasks for the authenticated user |
-| GET    | `/tasks/:id` | `id (uuid)`                                                      | Retrieves details of a specific task         |
-| POST   | `/tasks`     | `{ title, description?, status?, priority?, dueDate?, tagIds? }` | Creates a new task                           |
-| PATCH  | `/tasks/:id` | `{ title?, status?, priority?, ... }`                            | Partially updates task fields                |
-| DELETE | `/tasks/:id` | `id (uuid)`                                                      | Permanently deletes a task                   |
+- **Data Protection:**  
+  Database hashing of refresh tokens to prevent session hijacking.
 
----
-
-## 🏷️ Tag Module (`/tags`)
-
-Organization and categorization of elements.
-
-| Method | Endpoint    | Body / Parameters        | Description                              |
-| ------ | ----------- | ------------------------ | ---------------------------------------- |
-| GET    | `/tags`     | —                        | Lists all tags created by the user       |
-| GET    | `/tags/:id` | `id (uuid)`              | Retrieves information for a specific tag |
-| POST   | `/tags`     | `{ name, color, icon? }` | Creates a tag with an identifying color  |
-| PATCH  | `/tags/:id` | `{ name?, color? }`      | Modifies tag properties                  |
-| DELETE | `/tags/:id` | `id (uuid)`              | Removes the tag from the system          |
+- **Hardening:**  
+  Brute-force protection (Throttling), secure headers (Helmet), and strict DTO-based validation.
 
 ---
 
-## ⏱️ Timer Module (`/timers`)
+### ⚙️ Modular Architecture
 
-Logs for focus sessions and elapsed time tracking.
+- **Solid Database:**  
+  MySQL with automatic migrations and index optimization.
 
-| Method | Endpoint      | Body / Parameters             | Description                    |
-| ------ | ------------- | ----------------------------- | ------------------------------ |
-| GET    | `/timers`     | —                             | History of user time sessions  |
-| GET    | `/timers/:id` | `id (uuid)`                   | Queries a previous time record |
-| POST   | `/timers`     | `{ duration, type, taskId? }` | Logs a finished session        |
-| PATCH  | `/timers/:id` | `{ duration?, type? }`        | Corrects recorded session data |
-| DELETE | `/timers/:id` | `id (uuid)`                   | Deletes a record from history  |
+- **Multi-platform Settings:**  
+  Device-specific user preferences (Web / Mobile / Desktop).
 
----
-
-## ⚙️ Settings Module (`/settings`)
-
-User experience personalization preferences.
-
-| Method | Endpoint        | Body / Parameters                          | Description                          |
-| ------ | --------------- | ------------------------------------------ | ------------------------------------ |
-| GET    | `/settings`     | —                                          | Retrieves current user configuration |
-| POST   | `/settings`     | `{ theme, notifications, focusMode, ... }` | Sets initial profile configuration   |
-| PATCH  | `/settings/:id` | `{ theme?, language? }`                    | Updates specific preferences         |
+- **Docker Ready:**  
+  Optimized production image (~150MB) using Multi-stage builds.
 
 ---
 
-## 🛠️ Technologies & Standards
+## 🛣️ Main Endpoints
 
-* **Core:** NestJS (Node.js framework)
-* **Language:** TypeScript (Strict typing)
-* **Security:** JWT & Passport
-* **Validation:** `ValidationPipe` with `class-validator`
-* **Deployment:** Docker-ready (`Dockerfile`, `docker-compose.yml`)
+💡 **Note:** Full interactive documentation is available at `/docs` when the server is running.
 
----
-
-## 📦 Installation Guide
-
-### 🔽 Cloning
-
-```bash
-git clone https://github.com/your-username/ataraxia-api.git
-cd ataraxia-api
+🔐 **All protected endpoints require the header:**
 ```
 
-### ⚙️ Environment Setup
+Authorization: Bearer <access_token>
 
-Install dependencies and configure your `.env` file:
+```
+
+---
+
+### 🔐 Authentication (`/auth`)
+
+| Method | Endpoint | Description |
+|------|---------|------------|
+| POST | `/auth/register` | Creates a new user account |
+| POST | `/auth/login` | Returns Access Token + Refresh Token |
+| POST | `/auth/guest-login` | Creates or retrieves a guest session via `deviceId` |
+| POST | `/auth/refresh` | Requests a new Access Token |
+| POST | `/auth/logout` | Invalidates the Refresh Token |
+
+---
+
+### 🏆 Gamification (`/gamification`)
+
+| Method | Endpoint | Description |
+|------|---------|------------|
+| GET | `/gamification/stats` | Current streak, longest streak, level, achievements |
+
+---
+
+### ⏱️ Timers (`/timers`)
+
+| Method | Endpoint | Description |
+|------|---------|------------|
+| GET | `/timers` | Pomodoro session history |
+| POST | `/timers` | Registers a session and increases streak |
+| PATCH | `/timers/:id` | Updates session status |
+
+---
+
+### 📋 Tasks (`/tasks`)
+
+| Method | Endpoint | Description |
+|------|---------|------------|
+| GET | `/tasks` | Lists all user tasks |
+| POST | `/tasks` | Creates a new task |
+| PATCH | `/tasks/:id` | Completes or edits a task |
+| DELETE | `/tasks/:id` | Soft deletes a task |
+
+---
+
+### ⚙️ Settings (`/settings`)
+
+| Method | Endpoint | Description |
+|------|---------|------------|
+| GET | `/settings` | Gets configuration by platform |
+| PATCH | `/settings` | Updates user preferences |
+
+---
+
+## 🛠️ Tech Stack
+
+- **Core:** NestJS (Node.js framework)
+- **Database:** MySQL & TypeORM
+- **Security:** Passport, JWT, Bcrypt, Helmet
+- **Validation:** class-validator & class-transformer
+- **Infrastructure:** Docker & Docker Compose
+- **External Services:** Google Drive API (assets)
+
+---
+
+## 📦 Installation & Deployment Guide
+
+### Prerequisites
+
+- Docker and Docker Compose (**Recommended**)
+- Node.js v20+ (manual local development only)
+
+---
+
+## 🐳 Option A: Quick Deployment with Docker
+
+```bash
+git clone https://github.com/lavenderedit/ataraxia-api.git
+cd ataraxia-api
+cp .env.example .env
+docker-compose up -d --build
+````
+
+* API: `http://localhost:3000/api`
+* Swagger UI: `http://localhost:3000/docs`
+
+---
+
+## 💻 Option B: Local Development
 
 ```bash
 npm install
-```
-
-### ▶️ Direct Execution
-
-```bash
-# Development
-npm run start:dev
-
-# Production
 npm run build
-npm run start:prod
+npm run migration:run
+npm run start:dev
 ```
 
-### 🐳 Docker
-
-```bash
-docker-compose up --build -d
-```
+Make sure MySQL is running and properly configured in `.env`.
 
 ---
 
 <p align="center">
-  <sub>🛠️ Developed with 💙 by <strong>Studios TKOH</strong></sub>
+  <sub>🛠️ Made with 💙 and lots of coffee by <strong>Studios TKOH!</strong></sub>
 </p>
