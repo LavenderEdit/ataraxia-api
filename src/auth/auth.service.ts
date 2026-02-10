@@ -1,10 +1,14 @@
-import { Injectable, UnauthorizedException, ConflictException, ForbiddenException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, ForbiddenException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { RegisterDto } from './dto/register.dto';
 import * as bcrypt from 'bcrypt';
 import { GuestLoginDto } from './dto/guest-login.dto';
 import { ConfigService } from '@nestjs/config';
+import { MailerService } from '@nestjs-modules/mailer'; // Importamos el Mailer
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class AuthService {
@@ -12,6 +16,7 @@ export class AuthService {
         private usersService: UsersService,
         private jwtService: JwtService,
         private configService: ConfigService,
+        private mailerService: MailerService,
     ) { }
 
     async validateUser(email: string, pass: string): Promise<any> {
@@ -138,5 +143,86 @@ export class AuthService {
         });
 
         return this.login(newUser);
+    }
+
+    // --- NUEVAS FUNCIONALIDADES v0.3 (Fusionadas) ---
+
+    async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
+        // Usamos findOneByEmail que ya deberías tener
+        const user = await this.usersService.findByEmail(forgotPasswordDto.email);
+        
+        // No revelamos si el usuario existe o si es invitado por seguridad
+        if (!user || user.isGuest) {
+            return { message: 'Si el correo existe, recibirás un enlace para recuperar tu contraseña.' };
+        }
+
+        const token = uuidv4();
+        const expires = new Date();
+        expires.setHours(expires.getHours() + 1); // Expira en 1 hora
+
+        await this.usersService.update(user.id, {
+            resetPasswordToken: token,
+            resetPasswordExpires: expires,
+        });
+
+        const frontendUrls = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+        const primaryFrontendUrl = frontendUrls.split(',')[0].trim();
+        const resetUrl = `${primaryFrontendUrl}/reset-password?token=${token}`;
+        
+        try {
+            await this.mailerService.sendMail({
+                to: user.email,
+                subject: 'Recuperación de Contraseña - Ataraxia',
+                template: './forgot-password',
+                context: { 
+                    name: user.firstName || 'Usuario',
+                    url: resetUrl,
+                },
+            });
+        } catch (error) {
+            console.error('Error enviando email:', error);
+            throw new BadRequestException('Error técnico enviando el correo.');
+        }
+
+        return { message: 'Si el correo existe, recibirás un enlace para recuperar tu contraseña.' };
+    }
+
+    async resetPassword(resetPasswordDto: ResetPasswordDto) {
+        const { token, newPassword } = resetPasswordDto;
+        
+        const user = await this.usersService.findByResetToken(token);
+
+        if (!user) {
+            throw new BadRequestException('Token inválido o expirado');
+        }
+
+        if (!user.resetPasswordExpires || user.resetPasswordExpires < new Date()) {
+            throw new BadRequestException('El token ha expirado');
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        
+        await this.usersService.update(user.id, {
+            password: hashedPassword,
+            resetPasswordToken: null,
+            resetPasswordExpires: null,
+        });
+
+        return { message: 'Contraseña actualizada correctamente' };
+    }
+
+    async getProfile(userId: string) {
+        const user = await this.usersService.findOne(userId);
+        if (!user) throw new NotFoundException('Usuario no encontrado');
+        
+        const { 
+            password, 
+            resetPasswordToken, 
+            resetPasswordExpires, 
+            currentHashedRefreshToken, 
+            ...profile 
+        } = user;
+        
+        return profile;
     }
 }
