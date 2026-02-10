@@ -1,16 +1,16 @@
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { UserAchievement } from './user-achievement.entity';
 
 export enum AchievementType {
     STREAK = 'streak',
     POMODORO_COUNT = 'pomodoro_count',
-    // Puedes añadir más tipos aquí (ej: 'early_bird', 'night_owl')
+    // FUTURO: Podríamos agregar más tipos como "FIRST_LOGIN", "REFERRAL", etc.
 }
 
 @Entity('achievements')
 export class Achievement {
-    @PrimaryGeneratedColumn()
-    id: number;
+    @PrimaryGeneratedColumn('uuid')
+    id: string;
 
     @Column({ unique: true })
     code: string; // Ej: 'STREAK_5', 'POMO_100'
@@ -21,8 +21,8 @@ export class Achievement {
     @Column()
     description: string; // Ej: 'Mantén una racha de 5 días'
 
-    @Column()
-    driveFileId: string; // El ID del archivo en Google Drive (tu variable nueva)
+    @Column({ nullable: true }) // Hacemos nullable por seguridad si aún no hay imagen
+    driveFileId: string;
 
     @Column({
         type: 'enum',
@@ -31,7 +31,7 @@ export class Achievement {
     })
     type: AchievementType;
 
-    @Column()
+    @Column({ type: 'int', default: 0 })
     threshold: number; // Ej: 5 (para 5 días), 100 (para 100 pomodoros)
 
     @OneToMany(() => UserAchievement, (ua) => ua.achievement)

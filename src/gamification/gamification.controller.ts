@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards, Request, Post } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Request, ForbiddenException } from '@nestjs/common';
 import { GamificationService } from './gamification.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -15,5 +15,21 @@ export class GamificationController {
     @Post('test-activity')
     async registerActivity(@Request() req) {
         return this.gamificationService.registerActivity(req.user.id);
+    }
+
+    @Get('achievements')
+    findAll(@Request() req) {
+        if (req.user.isGuest) {
+            throw new ForbiddenException('Los invitados no tienen acceso a los logros. Por favor regístrate.');
+        }
+        return this.gamificationService.findAllUserAchievements(req.user.userId);
+    }
+
+    @Post('check-achievements')
+    checkAchievements(@Request() req) {
+        if (req.user.isGuest) {
+            throw new ForbiddenException('Los invitados no tienen acceso al progreso de logros.');
+        }
+        return { message: 'Verificación realizada' };
     }
 }

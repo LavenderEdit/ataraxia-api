@@ -62,17 +62,25 @@ export class AchievementsService {
     async getUserAchievements(userId: string) {
         const unlocks = await this.userAchievementRepo.find({
             where: { user: { id: userId } },
-            relations: ['achievement'],
+            relations: ['achievement']
         });
 
         const results = await Promise.all(
             unlocks.map(async (unlock) => {
-                const iconUrl = await this.googleDriveService.getFileViewLink(
-                    unlock.achievement.driveFileId,
-                );
+                let iconUrl = '';
+                if (unlock.achievement.driveFileId) {
+                    try {
+                        iconUrl = await this.googleDriveService.getFileViewLink(
+                            unlock.achievement.driveFileId,
+                        );
+                    } catch (error) {
+                        this.logger.warn(`Could not fetch drive link for achievement ${unlock.achievement.id}`);
+                    }
+                }
+
                 return {
                     ...unlock,
-                    iconUrl, // URL pública temporal o de visualización
+                    iconUrl,
                 };
             }),
         );

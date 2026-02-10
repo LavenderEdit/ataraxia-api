@@ -7,7 +7,7 @@ import { AchievementsService } from './achievements.service';
 export class GamificationService {
     constructor(
         private readonly usersService: UsersService,
-        private readonly achievementsService: AchievementsService, // ✨ Inyectamos
+        private readonly achievementsService: AchievementsService,
     ) { }
 
     async registerActivity(userId: string): Promise<User | null> {
@@ -15,6 +15,12 @@ export class GamificationService {
         if (!user) return null;
 
         const now = new Date();
+
+        if (user.isGuest) {
+            await this.usersService.update(user.id, { lastActiveAt: now });
+            return this.usersService.findById(user.id);
+        }
+
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
         let lastActiveDate: Date | null = null;
@@ -34,10 +40,13 @@ export class GamificationService {
 
         let newCurrentStreak = 1;
 
-        if (lastActiveDate && lastActiveDate.getTime() === yesterday.getTime()) {
-            newCurrentStreak = (user.currentStreak || 0) + 1;
-        } else if (lastActiveDate && lastActiveDate.getTime() === today.getTime()) {
-            newCurrentStreak = user.currentStreak || 1;
+        if (lastActiveDate) {
+            // Si la última vez fue ayer, suma racha
+            if (lastActiveDate.getTime() === yesterday.getTime()) {
+                newCurrentStreak = (user.currentStreak || 0) + 1;
+            }
+            // Nota: Si fue hoy ya lo manejamos arriba con el return.
+            // Si fue antes de ayer, no entra aquí y se queda en 1 (reset).
         }
 
         const newLongestStreak = Math.max(newCurrentStreak, user.longestStreak || 0);
@@ -49,6 +58,7 @@ export class GamificationService {
         });
 
         const updatedUser = await this.usersService.findById(user.id);
+
         if (updatedUser) {
             await this.achievementsService.checkStreakAchievements(updatedUser, newCurrentStreak);
         }
@@ -69,5 +79,9 @@ export class GamificationService {
             level: Math.floor((user.currentStreak || 0) / 5) + 1,
             achievements,
         };
+    }
+
+    async findAllUserAchievements(userId: string) {
+        return this.achievementsService.getUserAchievements(userId);
     }
 }
