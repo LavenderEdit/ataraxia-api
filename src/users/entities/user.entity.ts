@@ -3,6 +3,7 @@ import { Task } from '../../tasks/entities/task.entity';
 import { Timer } from '../../timers/entities/timer.entity';
 import { Tag } from '../../tags/entities/tag.entity';
 import { Setting } from '../../settings/entities/setting.entity';
+import { UserAchievement } from '../../gamification/entities/user-achievement.entity';
 
 @Entity('users')
 export class User {
@@ -37,6 +38,12 @@ export class User {
     longestStreak: number;
 
     @Column({ nullable: true })
+    resetPasswordToken?: string;
+
+    @Column({ nullable: true })
+    resetPasswordExpires?: Date;
+
+    @Column({ nullable: true })
     lastActiveAt: Date;
 
     @CreateDateColumn()
@@ -56,4 +63,7 @@ export class User {
 
     @OneToMany(() => Setting, (setting) => setting.user)
     settings: Setting[];
+
+    @OneToMany(() => UserAchievement, (userAchievement) => userAchievement.user)
+    achievements: UserAchievement[];
 }
