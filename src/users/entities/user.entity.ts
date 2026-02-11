@@ -16,11 +16,11 @@ export class User {
     @Column({ select: false, nullable: true })
     password: string;
 
-    @Column({ nullable: true })
-    firstName: string;
+    @Column({ nullable: true }) // Será obligatorio por lógica de negocio (DTO), pero nullable en BD para invitados
+    username: string; // El nombre de usuario o apodo principal
 
     @Column({ nullable: true })
-    lastName: string;
+    name: string; // Nombre completo (Opcional)
 
     @Column({ default: false })
     isGuest: boolean;

@@ -2,18 +2,12 @@ import { IsEmail, IsNotEmpty, IsString, MinLength, IsOptional, Matches } from 'c
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class RegisterDto {
-    @ApiProperty({ example: 'Juan', description: 'Nombre de pila del usuario' })
-    @IsNotEmpty({ message: 'El nombre es obligatorio' })
+    @ApiProperty({ example: 'JuanPerez23', description: 'Nombre de usuario único' })
+    @IsNotEmpty({ message: 'El nombre de usuario es obligatorio' })
     @IsString()
-    // Patrón: Solo letras (incluyendo tildes/ñ) y espacios. No números ni símbolos.
-    @Matches(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, { message: 'El nombre solo puede contener letras y espacios' })
-    firstName: string;
-
-    @ApiPropertyOptional({ example: 'Pérez', description: 'Apellido del usuario' })
-    @IsOptional()
-    @IsString()
-    @Matches(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, { message: 'El apellido solo puede contener letras y espacios' })
-    lastName?: string;
+    // Opcional: Puedes agregar un patrón si quieres restringir caracteres en el username (ej: sin espacios)
+    @Matches(/^[a-zA-Z0-9_]+$/, { message: 'El username solo puede contener letras, números y guiones bajos' })
+    username: string;
 
     @ApiProperty({ example: 'juan@ataraxia.app' })
     @IsEmail({}, { message: 'El correo electrónico no es válido' })
@@ -25,7 +19,6 @@ export class RegisterDto {
     })
     @IsNotEmpty({ message: 'La contraseña es obligatoria' })
     @MinLength(6, { message: 'La contraseña debe tener al menos 6 caracteres' })
-    // Patrón: Al menos 1 mayúscula, 1 minúscula y 1 número (o caracter especial)
     @Matches(
         /((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/,
         { message: 'La contraseña es débil: requiere mayúscula, minúscula y número' }

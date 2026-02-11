@@ -66,7 +66,7 @@ export class AuthService {
             ...tokens,
             user: {
                 id: user.id,
-                name: user.firstName || user.email,
+                name: user.username || user.email,
                 email: user.email,
                 isGuest: user.isGuest
             }
@@ -126,11 +126,11 @@ export class AuthService {
             const existingGuest = await this.usersService.findGuestByDeviceId(registerDto.deviceId);
 
             if (existingGuest) {
+                // CAMBIO: Mapeamos username en el upgrade
                 const upgradedUser = await this.usersService.upgradeGuestToUser(existingGuest.id, {
                     email: registerDto.email,
                     password: hashedPassword,
-                    firstName: registerDto.firstName,
-                    lastName: registerDto.lastName,
+                    username: registerDto.username,
                 });
 
                 return this.login(upgradedUser);
@@ -138,8 +138,10 @@ export class AuthService {
         }
 
         const newUser = await this.usersService.create({
-            ...registerDto,
+            email: registerDto.email,
             password: hashedPassword,
+            username: registerDto.username, // CAMBIO: Mapeo directo
+            isGuest: false,
         });
 
         return this.login(newUser);
@@ -148,17 +150,15 @@ export class AuthService {
     // --- NUEVAS FUNCIONALIDADES v0.3 (Fusionadas) ---
 
     async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
-        // Usamos findOneByEmail que ya deberías tener
         const user = await this.usersService.findByEmail(forgotPasswordDto.email);
-        
-        // No revelamos si el usuario existe o si es invitado por seguridad
+
         if (!user || user.isGuest) {
             return { message: 'Si el correo existe, recibirás un enlace para recuperar tu contraseña.' };
         }
 
         const token = uuidv4();
         const expires = new Date();
-        expires.setHours(expires.getHours() + 1); // Expira en 1 hora
+        expires.setHours(expires.getHours() + 1);
 
         await this.usersService.update(user.id, {
             resetPasswordToken: token,
@@ -167,15 +167,16 @@ export class AuthService {
 
         const frontendUrls = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
         const primaryFrontendUrl = frontendUrls.split(',')[0].trim();
+
         const resetUrl = `${primaryFrontendUrl}/reset-password?token=${token}`;
-        
+
         try {
             await this.mailerService.sendMail({
                 to: user.email,
                 subject: 'Recuperación de Contraseña - Ataraxia',
                 template: './forgot-password',
-                context: { 
-                    name: user.firstName || 'Usuario',
+                context: {
+                    name: user.username || 'Usuario',
                     url: resetUrl,
                 },
             });
@@ -189,7 +190,7 @@ export class AuthService {
 
     async resetPassword(resetPasswordDto: ResetPasswordDto) {
         const { token, newPassword } = resetPasswordDto;
-        
+
         const user = await this.usersService.findByResetToken(token);
 
         if (!user) {
@@ -201,7 +202,7 @@ export class AuthService {
         }
 
         const hashedPassword = await bcrypt.hash(newPassword, 10);
-        
+
         await this.usersService.update(user.id, {
             password: hashedPassword,
             resetPasswordToken: null,
@@ -214,15 +215,15 @@ export class AuthService {
     async getProfile(userId: string) {
         const user = await this.usersService.findOne(userId);
         if (!user) throw new NotFoundException('Usuario no encontrado');
-        
-        const { 
-            password, 
-            resetPasswordToken, 
-            resetPasswordExpires, 
-            currentHashedRefreshToken, 
-            ...profile 
+
+        const {
+            password,
+            resetPasswordToken,
+            resetPasswordExpires,
+            currentHashedRefreshToken,
+            ...profile
         } = user;
-        
+
         return profile;
     }
 }
