@@ -6,7 +6,10 @@ import { memoryStorage } from 'multer';
 import { AchievementsService } from './achievements.service';
 import { CreateAchievementDto } from './dto/create-achievement.dto';
 import { UpdateAchievementDto } from './dto/update-achievement.dto';
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiTags, ApiResponse } from '@nestjs/swagger';
 
+@ApiTags('Gamificación')
+@ApiBearerAuth()
 @Controller('gamification')
 @UseGuards(JwtAuthGuard)
 export class GamificationController {
@@ -15,16 +18,19 @@ export class GamificationController {
         private readonly achievementsService: AchievementsService
     ) { }
 
+    @ApiOperation({ summary: 'Obtener estadísticas del usuario (Racha, Nivel, Logros)' })
     @Get('stats')
     async getStats(@Request() req) {
         return this.gamificationService.getUserStats(req.user.id);
     }
 
+    @ApiOperation({ summary: 'Registrar actividad diaria (Simulación)' })
     @Post('test-activity')
     async registerActivity(@Request() req) {
         return this.gamificationService.registerActivity(req.user.id);
     }
 
+    @ApiOperation({ summary: 'Listar todos los logros desbloqueados por el usuario' })
     @Get('achievements')
     findAll(@Request() req) {
         if (req.user.isGuest) {
@@ -33,6 +39,7 @@ export class GamificationController {
         return this.gamificationService.findAllUserAchievements(req.user.userId);
     }
 
+    @ApiOperation({ summary: 'Verificar estado de logros (Check manual)' })
     @Post('check-achievements')
     checkAchievements(@Request() req) {
         if (req.user.isGuest) {
@@ -42,6 +49,9 @@ export class GamificationController {
     }
 
     // --- ADMIN: CREAR LOGRO ---
+    @ApiOperation({ summary: '[ADMIN] Crear definición de un nuevo logro' })
+    @ApiResponse({ status: 201, description: 'Logro creado exitosamente.' })
+    @ApiResponse({ status: 409, description: 'El código del logro ya existe.' })
     @Post('achievements')
     async createAchievement(@Body() createDto: CreateAchievementDto, @Request() req) {
         // if (!req.user.isAdmin) throw new ForbiddenException('Solo admins');
@@ -50,6 +60,7 @@ export class GamificationController {
 
     // --- ADMIN: ACTUALIZAR LOGRO (Metadata) ---
     // PATCH /api/gamification/achievements/:code
+    @ApiOperation({ summary: '[ADMIN] Actualizar datos de un logro' })
     @Patch('achievements/:code')
     async updateAchievement(
         @Param('code') code: string,
@@ -61,6 +72,20 @@ export class GamificationController {
     }
 
     // --- ADMIN: SUBIR/ACTUALIZAR IMAGEN ---
+    @ApiOperation({ summary: '[ADMIN] Subir o actualizar icono del logro (Sube a Google Drive)' })
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                file: {
+                    type: 'string',
+                    format: 'binary',
+                    description: 'Imagen del logro (.png, .jpg, .gif)',
+                },
+            },
+        },
+    })
     @Post('achievements/:code/icon')
     @UseInterceptors(FileInterceptor('file', {
         storage: memoryStorage(),
