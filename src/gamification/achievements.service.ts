@@ -1,10 +1,13 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Achievement, AchievementType } from './entities/achievement.entity';
 import { UserAchievement } from './entities/user-achievement.entity';
 import { User } from '../users/entities/user.entity';
 import { GoogleDriveService } from '../google-drive/google-drive.service';
+import * as fs from 'fs';
+import * as path from 'path';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AchievementsService {
@@ -16,7 +19,37 @@ export class AchievementsService {
         @InjectRepository(UserAchievement)
         private userAchievementRepo: Repository<UserAchievement>,
         private googleDriveService: GoogleDriveService,
+        private configService: ConfigService,
     ) { }
+
+    // --- LÓGICA DE UPLOAD A DRIVE v0.3.5 ---
+    async updateAchievementIcon(code: string, file: Express.Multer.File) {
+        const achievement = await this.achievementRepo.findOne({ where: { code } });
+        if (!achievement) throw new NotFoundException(`Logro con código ${code} no encontrado`);
+
+        // 1. Borrar versión anterior de Drive si existe
+        if (achievement.driveFileId) {
+            await this.googleDriveService.deleteFile(achievement.driveFileId);
+        }
+
+        // 2. Subir nuevo archivo a Drive
+        // Generamos un nombre único: codigo_timestamp.ext
+        const ext = file.originalname.split('.').pop();
+        const filename = `${code}_${Date.now()}.${ext}`;
+
+        const newFileId = await this.googleDriveService.uploadFile(
+            filename,
+            file.mimetype,
+            file.buffer // Multer MemoryStorage nos da esto
+        );
+
+        // 3. Actualizar BD
+        achievement.driveFileId = newFileId;
+        achievement.iconPath = null; // Limpiamos referencia local si existía
+
+        return this.achievementRepo.save(achievement);
+    }
+    // ---------------------------------------
 
     async checkStreakAchievements(user: User, currentStreak: number) {
         const potentialAchievements = await this.achievementRepo.find({

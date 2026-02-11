@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { google } from 'googleapis';
+import { Stream } from 'stream';
 
 @Injectable()
 export class GoogleDriveService {
@@ -28,6 +29,64 @@ export class GoogleDriveService {
         } catch (error) {
             this.logger.error(`Error fetching file from Drive: ${error.message}`);
             return '';
+        }
+    }
+
+    async uploadFile(filename: string, mimeType: string, buffer: Buffer): Promise<string> {
+        if (!this.driveClient) throw new Error('Google Drive not configured');
+
+        const folderId = this.configService.get<string>('GOOGLE_DRIVE_FOLDER_ID');
+
+        const bufferStream = new Stream.PassThrough();
+        bufferStream.end(buffer);
+
+        const fileMetadata = {
+            name: filename,
+            parents: folderId ? [folderId] : [],
+        };
+
+        const media = {
+            mimeType: mimeType,
+            body: bufferStream,
+        };
+
+        try {
+            const response = await this.driveClient.files.create({
+                requestBody: fileMetadata,
+                media: media,
+                fields: 'id',
+            });
+
+            await this.setFilePublic(response.data.id);
+
+            return response.data.id;
+        } catch (error) {
+            this.logger.error(`Upload failed: ${error.message}`);
+            throw error;
+        }
+    }
+
+    async deleteFile(fileId: string): Promise<void> {
+        if (!this.driveClient) return;
+        try {
+            await this.driveClient.files.delete({ fileId });
+            this.logger.log(`Deleted file ${fileId} from Drive`);
+        } catch (error) {
+            this.logger.warn(`Failed to delete file ${fileId}: ${error.message}`);
+        }
+    }
+
+    private async setFilePublic(fileId: string) {
+        try {
+            await this.driveClient.permissions.create({
+                fileId,
+                requestBody: {
+                    role: 'reader',
+                    type: 'anyone',
+                },
+            });
+        } catch (error) {
+            this.logger.warn(`Could not set public permission for ${fileId}`);
         }
     }
 }

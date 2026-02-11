@@ -21,8 +21,11 @@ export class Achievement {
     @Column()
     description: string; // Ej: 'Mantén una racha de 5 días'
 
-    @Column({ nullable: true }) // Hacemos nullable por seguridad si aún no hay imagen
-    driveFileId: string;
+    @Column({ type: 'varchar', nullable: true })
+    driveFileId: string | null;
+
+    @Column({ type: 'varchar', nullable: true })
+    iconPath: string | null; // Ruta local del archivo (ej: "logro_fuego.png")
 
     @Column({
         type: 'enum',
