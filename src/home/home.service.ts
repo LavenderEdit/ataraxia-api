@@ -7,7 +7,7 @@ export class HomeService {
             message: 'Bienvenido a la API de Ataraxia',
             info: {
                 name: 'ataraxia-api',
-                version: '0.2.0',
+                version: '0.3.6',
                 status: 'ONLINE',
                 serverTime: new Date().toISOString(),
                 description: 'API Backend para la aplicación de productividad Ataraxia'
