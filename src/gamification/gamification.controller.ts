@@ -1,9 +1,11 @@
-import { Controller, Get, Post, UseGuards, Request, ForbiddenException, Param, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Patch, Post, UseGuards, Body, Request, ForbiddenException, Param, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
 import { GamificationService } from './gamification.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { AchievementsService } from './achievements.service';
+import { CreateAchievementDto } from './dto/create-achievement.dto';
+import { UpdateAchievementDto } from './dto/update-achievement.dto';
 
 @Controller('gamification')
 @UseGuards(JwtAuthGuard)
@@ -39,6 +41,26 @@ export class GamificationController {
         return { message: 'Verificación realizada' };
     }
 
+    // --- ADMIN: CREAR LOGRO ---
+    @Post('achievements')
+    async createAchievement(@Body() createDto: CreateAchievementDto, @Request() req) {
+        // if (!req.user.isAdmin) throw new ForbiddenException('Solo admins');
+        return this.achievementsService.create(createDto);
+    }
+
+    // --- ADMIN: ACTUALIZAR LOGRO (Metadata) ---
+    // PATCH /api/gamification/achievements/:code
+    @Patch('achievements/:code')
+    async updateAchievement(
+        @Param('code') code: string,
+        @Body() updateDto: UpdateAchievementDto,
+        @Request() req
+    ) {
+        // if (!req.user.isAdmin) throw new ForbiddenException('Solo admins');
+        return this.achievementsService.update(code, updateDto);
+    }
+
+    // --- ADMIN: SUBIR/ACTUALIZAR IMAGEN ---
     @Post('achievements/:code/icon')
     @UseInterceptors(FileInterceptor('file', {
         storage: memoryStorage(),
@@ -49,7 +71,7 @@ export class GamificationController {
             callback(null, true);
         },
         limits: {
-            fileSize: 5 * 1024 * 1024 // Límite de 5MB
+            fileSize: 5 * 1024 * 1024
         }
     }))
     async uploadAchievementIcon(

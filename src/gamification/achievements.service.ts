@@ -1,13 +1,13 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Achievement, AchievementType } from './entities/achievement.entity';
 import { UserAchievement } from './entities/user-achievement.entity';
 import { User } from '../users/entities/user.entity';
 import { GoogleDriveService } from '../google-drive/google-drive.service';
-import * as fs from 'fs';
-import * as path from 'path';
 import { ConfigService } from '@nestjs/config';
+import { CreateAchievementDto } from './dto/create-achievement.dto';
+import { UpdateAchievementDto } from './dto/update-achievement.dto';
 
 @Injectable()
 export class AchievementsService {
@@ -22,7 +22,34 @@ export class AchievementsService {
         private configService: ConfigService,
     ) { }
 
-    // --- LÓGICA DE UPLOAD A DRIVE v0.3.5 ---
+    async create(createAchievementDto: CreateAchievementDto): Promise<Achievement> {
+        const existing = await this.achievementRepo.findOne({ where: { code: createAchievementDto.code } });
+        if (existing) {
+            throw new ConflictException(`Ya existe un logro con el código ${createAchievementDto.code}`);
+        }
+
+        const achievement = this.achievementRepo.create(createAchievementDto);
+        return this.achievementRepo.save(achievement);
+    }
+
+    async update(code: string, updateAchievementDto: UpdateAchievementDto): Promise<Achievement> {
+        const achievement = await this.achievementRepo.findOne({ where: { code } });
+        if (!achievement) {
+            throw new NotFoundException(`Logro con código ${code} no encontrado`);
+        }
+
+        if (updateAchievementDto.code && updateAchievementDto.code !== code) {
+            const existing = await this.achievementRepo.findOne({ where: { code: updateAchievementDto.code } });
+            if (existing) {
+                throw new ConflictException(`Ya existe un logro con el código ${updateAchievementDto.code}`);
+            }
+        }
+
+        // Merge de los datos nuevos con los existentes
+        this.achievementRepo.merge(achievement, updateAchievementDto);
+        return this.achievementRepo.save(achievement);
+    }
+
     async updateAchievementIcon(code: string, file: Express.Multer.File) {
         const achievement = await this.achievementRepo.findOne({ where: { code } });
         if (!achievement) throw new NotFoundException(`Logro con código ${code} no encontrado`);
@@ -40,7 +67,7 @@ export class AchievementsService {
         const newFileId = await this.googleDriveService.uploadFile(
             filename,
             file.mimetype,
-            file.buffer // Multer MemoryStorage nos da esto
+            file.buffer
         );
 
         // 3. Actualizar BD
@@ -49,7 +76,6 @@ export class AchievementsService {
 
         return this.achievementRepo.save(achievement);
     }
-    // ---------------------------------------
 
     async checkStreakAchievements(user: User, currentStreak: number) {
         const potentialAchievements = await this.achievementRepo.find({
@@ -121,9 +147,7 @@ export class AchievementsService {
         return results;
     }
 
-    // Endpoint auxiliar para poblar logros iniciales (Seed)
     async seedAchievements() {
-        // Ejemplo: Crear logro de racha de 3 días si no existe
         const count = await this.achievementRepo.count();
         if (count === 0) {
             await this.achievementRepo.save([
