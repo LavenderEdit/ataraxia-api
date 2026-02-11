@@ -1,6 +1,6 @@
 {
-  "name": "zenith-backend",
-  "version": "0.2.0",
+  "name": "ataraxia-api",
+  "version": "0.3.6",
   "description": "Backend API for the Ataraxia application",
   "author": "Studios TKOH!",
   "private": true,
