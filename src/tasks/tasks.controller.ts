@@ -1,54 +1,44 @@
-import {
-    Controller,
-    Get,
-    Post,
-    Body,
-    Patch,
-    Param,
-    Delete,
-    UseGuards,
-    Request,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request } from '@nestjs/common';
 import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Tareas')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('tasks')
 export class TasksController {
     constructor(private readonly tasksService: TasksService) { }
 
-    @UseGuards(JwtAuthGuard)
+    @ApiOperation({ summary: 'Crear una nueva tarea' })
     @Post()
     create(@Body() createTaskDto: CreateTaskDto, @Request() req) {
-        return this.tasksService.create(createTaskDto, req.user);
+        return this.tasksService.create(createTaskDto, req.user.userId);
     }
 
-    @UseGuards(JwtAuthGuard)
+    @ApiOperation({ summary: 'Listar todas las tareas del usuario' })
     @Get()
     findAll(@Request() req) {
-        return this.tasksService.findAll(req.user);
+        return this.tasksService.findAll(req.user.userId);
     }
 
-    @UseGuards(JwtAuthGuard)
+    @ApiOperation({ summary: 'Obtener una tarea por ID' })
     @Get(':id')
     findOne(@Param('id') id: string, @Request() req) {
-        return this.tasksService.findOne(id, req.user);
+        return this.tasksService.findOne(id, req.user.userId);
     }
 
-    @UseGuards(JwtAuthGuard)
+    @ApiOperation({ summary: 'Actualizar una tarea' })
     @Patch(':id')
-    update(
-        @Param('id') id: string,
-        @Body() updateTaskDto: UpdateTaskDto,
-        @Request() req,
-    ) {
-        return this.tasksService.update(id, updateTaskDto, req.user);
+    update(@Param('id') id: string, @Body() updateTaskDto: UpdateTaskDto, @Request() req) {
+        return this.tasksService.update(id, updateTaskDto, req.user.userId);
     }
 
-    @UseGuards(JwtAuthGuard)
+    @ApiOperation({ summary: 'Eliminar una tarea' })
     @Delete(':id')
     remove(@Param('id') id: string, @Request() req) {
-        return this.tasksService.remove(id, req.user);
+        return this.tasksService.remove(id, req.user.userId);
     }
 }
