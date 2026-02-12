@@ -130,7 +130,7 @@ export class AuthService {
                 const upgradedUser = await this.usersService.upgradeGuestToUser(existingGuest.id, {
                     email: registerDto.email,
                     password: hashedPassword,
-                    username: registerDto.username,
+                    name: registerDto.username,
                 });
 
                 return this.login(upgradedUser);
@@ -140,7 +140,7 @@ export class AuthService {
         const newUser = await this.usersService.create({
             email: registerDto.email,
             password: hashedPassword,
-            username: registerDto.username, // CAMBIO: Mapeo directo
+            name: registerDto.username, // CAMBIO: Mapeo directo
             isGuest: false,
         });
 
@@ -176,7 +176,7 @@ export class AuthService {
                 subject: 'Recuperación de Contraseña - Ataraxia',
                 template: './forgot-password',
                 context: {
-                    name: user.username || 'Usuario',
+                    name: user.name || 'Usuario',
                     url: resetUrl,
                 },
             });
