@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Post, UseGuards, Body, Request, ForbiddenException, Param, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Patch, Post, UseGuards, Body, Request, ForbiddenException, Param, UseInterceptors, UploadedFile, BadRequestException, Query } from '@nestjs/common';
 import { GamificationService } from './gamification.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -7,6 +7,7 @@ import { AchievementsService } from './achievements.service';
 import { CreateAchievementDto } from './dto/create-achievement.dto';
 import { UpdateAchievementDto } from './dto/update-achievement.dto';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiTags, ApiResponse } from '@nestjs/swagger';
+import { GetLeaderboardDto } from './dto/get-leaderboard.dto';
 
 @ApiTags('Gamificación')
 @ApiBearerAuth()
@@ -17,6 +18,11 @@ export class GamificationController {
         private readonly gamificationService: GamificationService,
         private readonly achievementsService: AchievementsService
     ) { }
+
+    @Get('leaderboard')
+    getLeaderboard(@Query() query: GetLeaderboardDto) {
+        return this.gamificationService.getLeaderboard(query);
+    }
 
     @ApiOperation({ summary: 'Obtener estadísticas del usuario (Racha, Nivel, Logros)' })
     @Get('stats')
