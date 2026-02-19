@@ -15,30 +15,35 @@ export class TasksController {
     @ApiOperation({ summary: 'Crear una nueva tarea' })
     @Post()
     create(@Body() createTaskDto: CreateTaskDto, @Request() req) {
-        return this.tasksService.create(createTaskDto, req.user.userId);
+        const userId = req.user.id || req.user.userId;
+        return this.tasksService.create(createTaskDto, userId);
     }
 
     @ApiOperation({ summary: 'Listar todas las tareas del usuario' })
     @Get()
     findAll(@Request() req) {
-        return this.tasksService.findAll(req.user.userId);
+        const userId = req.user.id || req.user.userId;
+        return this.tasksService.findAll(userId);
     }
 
     @ApiOperation({ summary: 'Obtener una tarea por ID' })
     @Get(':id')
     findOne(@Param('id') id: string, @Request() req) {
-        return this.tasksService.findOne(id, req.user.userId);
+        const userId = req.user.id || req.user.userId;
+        return this.tasksService.findOne(id, userId);
     }
 
     @ApiOperation({ summary: 'Actualizar una tarea' })
     @Patch(':id')
     update(@Param('id') id: string, @Body() updateTaskDto: UpdateTaskDto, @Request() req) {
-        return this.tasksService.update(id, updateTaskDto, req.user.userId);
+        const userId = req.user.id || req.user.userId;
+        return this.tasksService.update(id, updateTaskDto, userId);
     }
 
     @ApiOperation({ summary: 'Eliminar una tarea' })
     @Delete(':id')
     remove(@Param('id') id: string, @Request() req) {
-        return this.tasksService.remove(id, req.user.userId);
+        const userId = req.user.id || req.user.userId;
+        return this.tasksService.remove(id, userId);
     }
 }
