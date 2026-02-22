@@ -1,11 +1,16 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 import { UsersService } from '../users/users.service';
 import { User } from '../users/entities/user.entity';
 import { AchievementsService } from './achievements.service';
+import { Repository } from 'typeorm';
+import { GetLeaderboardDto } from './dto/get-leaderboard.dto';
 
 @Injectable()
 export class GamificationService {
     constructor(
+        @InjectRepository(User)
+        private readonly userRepository: Repository<User>,
         private readonly usersService: UsersService,
         private readonly achievementsService: AchievementsService,
     ) { }
@@ -25,13 +30,13 @@ export class GamificationService {
 
         let lastActiveDate: Date | null = null;
 
-        if (user.lastActiveAt) {
-            const last = new Date(user.lastActiveAt);
+        if (user.lastActiveDate) {
+            const last = new Date(user.lastActiveDate);
             lastActiveDate = new Date(last.getFullYear(), last.getMonth(), last.getDate());
         }
 
         if (lastActiveDate && lastActiveDate.getTime() === today.getTime()) {
-            await this.usersService.update(user.id, { lastActiveAt: now });
+            await this.usersService.update(user.id, { lastActiveDate: now });
             return this.usersService.findById(user.id);
         }
 
@@ -75,7 +80,7 @@ export class GamificationService {
         return {
             currentStreak: user.currentStreak || 0,
             longestStreak: user.longestStreak || 0,
-            lastActiveAt: user.lastActiveAt,
+            lastActiveAt: user.lastActiveDate,
             level: Math.floor((user.currentStreak || 0) / 5) + 1,
             achievements,
         };
@@ -83,5 +88,43 @@ export class GamificationService {
 
     async findAllUserAchievements(userId: string) {
         return this.achievementsService.getUserAchievements(userId);
+    }
+
+    async getLeaderboard(dto: GetLeaderboardDto) {
+        const { page = 1, limit = 10, sortBy = 'experience' } = dto;
+        const skip = (page - 1) * limit;
+
+        const queryBuilder = this.userRepository.createQueryBuilder('user');
+
+        queryBuilder
+            .select([
+                'user.id',
+                'user.name',
+                'user.avatarUrl',
+                'user.experience',
+                'user.pomodorosCompleted',
+                'user.currentStreak',
+            ])
+            // Opcional: Mostrar solo usuarios registrados en el leaderboard
+            .where('user.isGuest = :isGuest', { isGuest: false })
+            .orderBy(`user.${sortBy}`, 'DESC')
+            .addOrderBy('user.name', 'ASC') // Desempate por nombre
+            .skip(skip)
+            .take(limit);
+
+        const [users, total] = await queryBuilder.getManyAndCount();
+
+        return {
+            data: users.map((user, index) => ({
+                ...user,
+                rank: skip + index + 1,
+            })),
+            meta: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit),
+            },
+        };
     }
 }

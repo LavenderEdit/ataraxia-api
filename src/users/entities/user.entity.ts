@@ -1,6 +1,14 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
-import { Task } from '../../tasks/entities/task.entity';
+import {
+    Entity,
+    PrimaryGeneratedColumn,
+    Column,
+    CreateDateColumn,
+    UpdateDateColumn,
+    OneToMany,
+    Index,
+} from 'typeorm';
 import { Timer } from '../../timers/entities/timer.entity';
+import { Task } from '../../tasks/entities/task.entity';
 import { Tag } from '../../tags/entities/tag.entity';
 import { Setting } from '../../settings/entities/setting.entity';
 import { UserAchievement } from '../../gamification/entities/user-achievement.entity';
@@ -10,32 +18,33 @@ export class User {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
+    // Mantenemos 'name' (Username) para compatibilidad, pero aplicamos la lógica nullable del snippet
+    @Column({ unique: true, nullable: true })
+    name: string;
+
     @Column({ unique: true, nullable: true })
     email: string;
 
-    @Column({ select: false, nullable: true })
+    @Column({ nullable: true, select: false })
     password: string;
 
-    @Column({ nullable: true }) // Será obligatorio por lógica de negocio (DTO), pero nullable en BD para invitados
-    username: string; // El nombre de usuario o apodo principal
+    // Mantenemos 'fullName' para compatibilidad con tu sistema actual
+    @Column({ nullable: true })
+    fullName?: string;
 
     @Column({ nullable: true })
-    name: string; // Nombre completo (Opcional)
+    avatarUrl?: string;
 
     @Column({ default: false })
     isGuest: boolean;
 
+    // --- Nuevos campos solicitados en tu snippet ---
+
     @Column({ nullable: true })
-    deviceId: string;
+    deviceId?: string;
 
     @Column({ nullable: true, select: false })
-    currentHashedRefreshToken: string;
-
-    @Column({ default: 0 })
-    currentStreak: number;
-
-    @Column({ default: 0 })
-    longestStreak: number;
+    currentHashedRefreshToken?: string;
 
     @Column({ nullable: true })
     resetPasswordToken?: string;
@@ -43,20 +52,34 @@ export class User {
     @Column({ nullable: true })
     resetPasswordExpires?: Date;
 
-    @Column({ nullable: true })
-    lastActiveAt: Date;
+    // --- Gamification Stats (Optimizados para v0.4 Leaderboard) ---
 
-    @CreateDateColumn()
-    createdAt: Date;
+    @Index() // Optimización clave para ordenar el ranking rápidamente
+    @Column({ default: 0 })
+    experience: number;
 
-    @UpdateDateColumn()
-    updatedAt: Date;
+    @Index() // Optimización clave para el ranking de pomodoros
+    @Column({ default: 0 })
+    pomodorosCompleted: number;
 
-    @OneToMany(() => Task, (task) => task.user)
-    tasks: Task[];
+    // --- Streaks ---
+
+    @Column({ default: 0 })
+    currentStreak: number;
+
+    @Column({ default: 0 })
+    longestStreak: number;
+
+    @Column({ type: 'timestamp', nullable: true })
+    lastActiveDate: Date; // Equivalente a lastActiveAt
+
+    // --- Relations ---
 
     @OneToMany(() => Timer, (timer) => timer.user)
     timers: Timer[];
+
+    @OneToMany(() => Task, (task) => task.user)
+    tasks: Task[];
 
     @OneToMany(() => Tag, (tag) => tag.user)
     tags: Tag[];
@@ -66,4 +89,10 @@ export class User {
 
     @OneToMany(() => UserAchievement, (userAchievement) => userAchievement.user)
     achievements: UserAchievement[];
+
+    @CreateDateColumn()
+    createdAt: Date;
+
+    @UpdateDateColumn()
+    updatedAt: Date;
 }
