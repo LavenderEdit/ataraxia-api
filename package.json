@@ -1,6 +1,6 @@
 {
   "name": "ataraxia-api",
-  "version": "0.3.6",
+  "version": "0.4.0",
   "description": "Backend API for the Ataraxia application",
   "author": "Studios TKOH!",
   "private": true,
