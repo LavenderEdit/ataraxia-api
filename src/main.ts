@@ -32,7 +32,7 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('Ataraxia API')
     .setDescription('API Backend para la aplicación de productividad Ataraxia')
-    .setVersion('0.3.6')
+    .setVersion('0.4.0')
     .addBearerAuth()
     .build();
 
