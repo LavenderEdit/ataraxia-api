@@ -4,7 +4,6 @@ import { UpdateTaskDto } from './dto/update-task.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Task } from './entities/task.entity';
 import { Repository } from 'typeorm';
-import { User } from '../users/entities/user.entity';
 import { GamificationService } from 'src/gamification/gamification.service';
 
 @Injectable()
@@ -12,51 +11,50 @@ export class TasksService {
     constructor(
         @InjectRepository(Task)
         private tasksRepository: Repository<Task>,
-        private gamificationService: GamificationService, // ✨ Inyectamos
+        private gamificationService: GamificationService,
     ) { }
 
-    async create(createTaskDto: CreateTaskDto, user: User) {
+    async create(createTaskDto: CreateTaskDto, userId: string) {
         const task = this.tasksRepository.create({
             ...createTaskDto,
-            user: user,
-            userId: user.id,
+            userId: userId,
         });
 
-        const savedTask = await this.tasksRepository.save(task);
-
-        return { ...savedTask, userId: user.id };
+        return await this.tasksRepository.save(task);
     }
 
-    async findAll(user: User) {
+    async findAll(userId: string) {
         return this.tasksRepository.find({
-            where: { user: { id: user.id } },
+            where: { userId: userId },
             order: { createdAt: 'DESC' },
         });
     }
 
-    async findOne(id: string, user: User) {
+    async findOne(id: string, userId: string) {
         const task = await this.tasksRepository.findOne({
-            where: { id, user: { id: user.id } },
+            where: { id, userId: userId },
         });
+
         if (!task) {
             throw new NotFoundException(`Task #${id} not found`);
         }
+
         return task;
     }
 
-    async update(id: string, updateTaskDto: UpdateTaskDto, user: User) {
-        const task = await this.findOne(id, user);
+    async update(id: string, updateTaskDto: UpdateTaskDto, userId: string) {
+        const task = await this.findOne(id, userId);
 
         if (updateTaskDto.completed === true && !task.completed) {
-            await this.gamificationService.registerActivity(user.id);
+            await this.gamificationService.registerActivity(userId);
         }
 
         Object.assign(task, updateTaskDto);
         return this.tasksRepository.save(task);
     }
 
-    async remove(id: string, user: User) {
-        const task = await this.findOne(id, user);
+    async remove(id: string, userId: string) {
+        const task = await this.findOne(id, userId);
         return this.tasksRepository.softRemove(task);
     }
 }
