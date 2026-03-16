@@ -45,6 +45,7 @@ export class TasksService {
     async update(id: string, updateTaskDto: UpdateTaskDto, userId: string) {
         const task = await this.findOne(id, userId);
 
+        //Comenta gamificacion (error)
         if (updateTaskDto.completed === true && !task.completed) {
             await this.gamificationService.registerActivity(userId);
         }
