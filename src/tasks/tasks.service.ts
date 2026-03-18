@@ -45,9 +45,9 @@ export class TasksService {
     async update(id: string, updateTaskDto: UpdateTaskDto, userId: string) {
         const task = await this.findOne(id, userId);
 
-        //Comenta gamificacion (error)
+        //gamificacion (error)
         if (updateTaskDto.completed === true && !task.completed) {
-            await this.gamificationService.registerActivity(userId);
+            this.gamificationService.registerActivity(userId).catch((e) => console.error('gamification_failed', e));
         }
 
         Object.assign(task, updateTaskDto);
