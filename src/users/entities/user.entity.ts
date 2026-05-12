@@ -16,17 +16,17 @@ import { UserAchievement } from '../../gamification/entities/user-achievement.en
 @Entity('users')
 export class User {
     @PrimaryGeneratedColumn('uuid')
-    id: string;
+    id!: string;
 
     // Mantenemos 'name' (Username) para compatibilidad, pero aplicamos la lógica nullable del snippet
     @Column({ unique: true, nullable: true })
-    name: string;
+    name!: string;
 
     @Column({ unique: true, nullable: true })
-    email: string;
+    email!: string;
 
     @Column({ nullable: true, select: false })
-    password: string;
+    password!: string;
 
     // Mantenemos 'fullName' para compatibilidad con tu sistema actual
     @Column({ nullable: true })
@@ -36,7 +36,7 @@ export class User {
     avatarUrl?: string;
 
     @Column({ default: false })
-    isGuest: boolean;
+    isGuest!: boolean;
 
     // --- Nuevos campos solicitados en tu snippet ---
 
@@ -56,43 +56,43 @@ export class User {
 
     @Index() // Optimización clave para ordenar el ranking rápidamente
     @Column({ default: 0 })
-    experience: number;
+    experience!: number;
 
     @Index() // Optimización clave para el ranking de pomodoros
     @Column({ default: 0 })
-    pomodorosCompleted: number;
+    pomodorosCompleted!: number;
 
     // --- Streaks ---
 
     @Column({ default: 0 })
-    currentStreak: number;
+    currentStreak!: number;
 
     @Column({ default: 0 })
-    longestStreak: number;
+    longestStreak!: number;
 
     @Column({ type: 'timestamp', nullable: true })
-    lastActiveDate: Date; // Equivalente a lastActiveAt
+    lastActiveDate!: Date; // Equivalente a lastActiveAt
 
     // --- Relations ---
 
     @OneToMany(() => Timer, (timer) => timer.user)
-    timers: Timer[];
+    timers!: Timer[];
 
     @OneToMany(() => Task, (task) => task.user)
-    tasks: Task[];
+    tasks!: Task[];
 
     @OneToMany(() => Tag, (tag) => tag.user)
-    tags: Tag[];
+    tags!: Tag[];
 
     @OneToMany(() => Setting, (setting) => setting.user)
-    settings: Setting[];
+    settings!: Setting[];
 
     @OneToMany(() => UserAchievement, (userAchievement) => userAchievement.user)
-    achievements: UserAchievement[];
+    achievements!: UserAchievement[];
 
     @CreateDateColumn()
-    createdAt: Date;
+    createdAt!: Date;
 
     @UpdateDateColumn()
-    updatedAt: Date;
+    updatedAt!: Date;
 }
