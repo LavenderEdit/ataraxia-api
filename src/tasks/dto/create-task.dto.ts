@@ -6,7 +6,7 @@ export class CreateTaskDto {
     @IsNotEmpty()
     @IsString()
     @Matches(/^[a-zA-Z0-9\s\-_.,!?áéíóúÁÉÍÓÚñÑ]+$/, { message: 'El título contiene caracteres no permitidos' })
-    title: string;
+    title!: string;
 
     @ApiPropertyOptional({ example: 'Programación', description: 'Etiqueta asociada (opcional)' })
     @IsOptional()
