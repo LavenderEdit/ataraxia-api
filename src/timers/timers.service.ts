@@ -6,7 +6,7 @@ import { Timer } from './entities/timer.entity';
 import { Repository } from 'typeorm';
 import { User } from '../users/entities/user.entity';
 import { GamificationService } from '../gamification/gamification.service';
-import { AchievementsService } from 'src/gamification/achievements.service';
+import { AchievementsService } from '../gamification/achievements.service';
 
 @Injectable()
 export class TimersService {
