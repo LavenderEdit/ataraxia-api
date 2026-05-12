@@ -4,7 +4,7 @@ import { UpdateTaskDto } from './dto/update-task.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Task } from './entities/task.entity';
 import { Repository } from 'typeorm';
-import { GamificationService } from 'src/gamification/gamification.service';
+import { GamificationService } from '../gamification/gamification.service';
 
 @Injectable()
 export class TasksService {
