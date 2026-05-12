@@ -27,8 +27,6 @@ import { GoogleDriveModule } from './google-drive/google-drive.module';
       envFilePath: '.env',
     }),
 
-    // Seguridad: Rate Limiting 
-    // Límite: 10 peticiones (limit) cada 60 segundos (ttl) por IP
     ThrottlerModule.forRoot([{
       ttl: 60000,
       limit: 10,
@@ -41,14 +39,13 @@ import { GoogleDriveModule } from './google-drive/google-drive.module';
       synchronize: process.env.NODE_ENV === 'development',
     }),
 
-    // --- Configuración SMTP para v0.3 (Nuevo) ---
     MailerModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         transport: {
           host: configService.get('SMTP_HOST'),
           port: configService.get('SMTP_PORT'),
-          secure: false, // true para puerto 465, false para otros (587)
+          secure: false,
           auth: {
             user: configService.get('GMAIL_APP_EMAIL'),
             pass: configService.get('GMAIL_APP_PASSWORD'),
@@ -58,7 +55,7 @@ import { GoogleDriveModule } from './google-drive/google-drive.module';
           from: `"Ataraxia Support" <${configService.get('GMAIL_APP_EMAIL')}>`,
         },
         template: {
-          dir: process.cwd() + '/templates/',
+          dir: '/app/templates',
           adapter: new HandlebarsAdapter(),
           options: {
             strict: true,
@@ -68,7 +65,6 @@ import { GoogleDriveModule } from './google-drive/google-drive.module';
       inject: [ConfigService],
     }),
 
-    // Módulos
     AuthModule,
     UsersModule,
     TasksModule,
