@@ -6,14 +6,14 @@ import { Achievement } from './achievement.entity';
 @Unique(['user', 'achievement']) // Un usuario no puede tener el mismo logro dos veces
 export class UserAchievement {
     @PrimaryGeneratedColumn('uuid')
-    id: string;
+    id!: string;
 
     @ManyToOne(() => User, { onDelete: 'CASCADE' })
-    user: User;
+    user!: User;
 
     @ManyToOne(() => Achievement, (achievement) => achievement.userAchievements)
-    achievement: Achievement;
+    achievement!: Achievement;
 
     @CreateDateColumn()
-    unlockedAt: Date;
+    unlockedAt!: Date;
 }
