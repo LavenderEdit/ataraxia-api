@@ -6,17 +6,17 @@ export class CreateAchievementDto {
     @ApiProperty({ example: 'STREAK_100', description: 'Código único del logro' })
     @IsString()
     @IsNotEmpty()
-    code: string;
+    code!: string;
 
     @ApiProperty({ example: 'Centurión', description: 'Nombre visible del logro' })
     @IsString()
     @IsNotEmpty()
-    name: string;
+    name!: string;
 
     @ApiProperty({ example: 'Completa 100 días de racha', description: 'Descripción del logro' })
     @IsString()
     @IsNotEmpty()
-    description: string;
+    description!: string;
 
     @ApiPropertyOptional({ enum: AchievementType, default: AchievementType.STREAK })
     @IsEnum(AchievementType)
@@ -26,7 +26,7 @@ export class CreateAchievementDto {
     @ApiProperty({ example: 100, description: 'Cantidad necesaria para desbloquear' })
     @IsInt()
     @Min(1)
-    threshold: number;
+    threshold!: number;
 
     @ApiPropertyOptional({ example: 500, description: 'Puntos de experiencia otorgados' })
     @IsInt()
