@@ -7,7 +7,7 @@ import { GoogleDriveModule } from '../google-drive/google-drive.module';
 import { AchievementsService } from './achievements.service';
 import { Achievement } from './entities/achievement.entity';
 import { UserAchievement } from './entities/user-achievement.entity';
-import { User } from 'src/users/entities/user.entity';
+import { User } from '../users/entities/user.entity';
 
 @Module({
     imports: [
