@@ -15,36 +15,36 @@ import { Timer } from '../../timers/entities/timer.entity';
 @Entity('tasks')
 export class Task {
     @PrimaryGeneratedColumn('uuid')
-    id: string;
+    id!: string;
 
     @Column()
-    title: string;
+    title!: string;
 
     @Column({ nullable: true })
-    description: string;
+    description!: string;
 
     @Column({ default: false })
-    completed: boolean;
+    completed!: boolean;
 
     @CreateDateColumn()
-    createdAt: Date;
+    createdAt!: Date;
 
     @Index()
     @Column({ nullable: true })
-    userId: string;
+    userId!: string;
 
     @Column({ nullable: true })
-    tag: string;
+    tag!: string;
 
     // Relación vinculada a la columna explícita userId
     @ManyToOne(() => User, (user) => user.tasks, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'userId' })
-    user: User;
+    user!: User;
 
     @OneToMany(() => Timer, (timer) => timer.task)
-    timers: Timer[];
+    timers!: Timer[];
 
     // NUEVO v0.2: Soft Delete
     @DeleteDateColumn()
-    deletedAt: Date;
+    deletedAt!: Date;
 }
