@@ -4,17 +4,17 @@ import { User } from '../../users/entities/user.entity';
 @Entity('tags')
 export class Tag {
     @PrimaryGeneratedColumn('uuid')
-    id: string;
+    id!: string;
 
     @Column()
-    name: string;
+    name!: string;
 
     @Column({ nullable: true })
-    color: string;
+    color!: string;
 
     @ManyToOne(() => User, (user) => user.tags, { onDelete: 'CASCADE' })
-    user: User;
+    user!: User;
 
     @CreateDateColumn()
-    createdAt: Date;
+    createdAt!: Date;
 }
