@@ -12,7 +12,7 @@ export class CreateTimerDto {
     @IsNotEmpty()
     @IsNumber()
     @Min(1, { message: 'La duración debe ser al menos 1 segundo' })
-    duration: number;
+    duration!: number;
 
     @ApiPropertyOptional({ example: '2023-10-27T10:00:00Z', description: 'Fecha de inicio (ISO 8601)' })
     @IsOptional()
