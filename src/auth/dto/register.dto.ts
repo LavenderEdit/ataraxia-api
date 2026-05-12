@@ -7,11 +7,11 @@ export class RegisterDto {
     @IsString()
     // Opcional: Puedes agregar un patrón si quieres restringir caracteres en el username (ej: sin espacios)
     @Matches(/^[a-zA-Z0-9_]+$/, { message: 'El username solo puede contener letras, números y guiones bajos' })
-    username: string;
+    username!: string;
 
     @ApiProperty({ example: 'juan@ataraxia.app' })
     @IsEmail({}, { message: 'El correo electrónico no es válido' })
-    email: string;
+    email!: string;
 
     @ApiProperty({
         example: 'Pass1234',
@@ -23,7 +23,7 @@ export class RegisterDto {
         /((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/,
         { message: 'La contraseña es débil: requiere mayúscula, minúscula y número' }
     )
-    password: string;
+    password!: string;
 
     @ApiPropertyOptional({ example: 'uuid-dispositivo-123' })
     @IsOptional()
