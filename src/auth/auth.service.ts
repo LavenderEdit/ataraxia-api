@@ -174,7 +174,7 @@ export class AuthService {
             await this.mailerService.sendMail({
                 to: user.email,
                 subject: 'Recuperación de Contraseña - Ataraxia',
-                template: './forgot-password',
+                template: 'forgot-password',
                 context: {
                     name: user.name || 'Usuario',
                     url: resetUrl,
