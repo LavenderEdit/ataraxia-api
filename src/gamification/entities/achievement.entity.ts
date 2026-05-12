@@ -10,33 +10,33 @@ export enum AchievementType {
 @Entity('achievements')
 export class Achievement {
     @PrimaryGeneratedColumn('uuid')
-    id: string;
+    id!: string;
 
     @Column({ unique: true })
-    code: string; // Ej: 'STREAK_5', 'POMO_100'
+    code!: string; // Ej: 'STREAK_5', 'POMO_100'
 
     @Column()
-    name: string; // Ej: 'Racha de Fuego'
+    name!: string; // Ej: 'Racha de Fuego'
 
     @Column()
-    description: string; // Ej: 'Mantén una racha de 5 días'
+    description!: string; // Ej: 'Mantén una racha de 5 días'
 
     @Column({ type: 'varchar', nullable: true })
-    driveFileId: string | null;
+    driveFileId!: string | null;
 
     @Column({ type: 'varchar', nullable: true })
-    iconPath: string | null; // Ruta local del archivo (ej: "logro_fuego.png")
+    iconPath!: string | null; // Ruta local del archivo (ej: "logro_fuego.png")
 
     @Column({
         type: 'enum',
         enum: AchievementType,
         default: AchievementType.STREAK,
     })
-    type: AchievementType;
+    type!: AchievementType;
 
     @Column({ type: 'int', default: 0 })
-    threshold: number; // Ej: 5 (para 5 días), 100 (para 100 pomodoros)
+    threshold!: number; // Ej: 5 (para 5 días), 100 (para 100 pomodoros)
 
     @OneToMany(() => UserAchievement, (ua) => ua.achievement)
-    userAchievements: UserAchievement[];
+    userAchievements!: UserAchievement[];
 }
