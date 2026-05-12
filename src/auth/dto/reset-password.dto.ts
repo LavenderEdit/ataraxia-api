@@ -8,7 +8,7 @@ export class ResetPasswordDto {
     })
     @IsNotEmpty()
     @IsString()
-    token: string;
+    token!: string;
 
     @ApiProperty({
         example: 'NuevaClaveSegura123',
@@ -17,5 +17,5 @@ export class ResetPasswordDto {
     @IsNotEmpty()
     @IsString()
     @MinLength(6, { message: 'La contraseña debe tener al menos 6 caracteres' })
-    newPassword: string;
+    newPassword!: string;
 }
