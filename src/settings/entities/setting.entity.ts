@@ -5,38 +5,38 @@ import { User } from '../../users/entities/user.entity';
 @Index(['user', 'platform'], { unique: true })
 export class Setting {
     @PrimaryGeneratedColumn()
-    id: number;
+    id!: number;
 
     @Column({ default: 25 })
-    focusDuration: number;
+    focusDuration!: number;
 
     @Column({ default: 5 })
-    shortBreakDuration: number;
+    shortBreakDuration!: number;
 
     @Column({ default: 15 })
-    longBreakDuration: number;
+    longBreakDuration!: number;
 
     @Column({ default: false })
-    autoStartBreaks: boolean;
+    autoStartBreaks!: boolean;
 
     @Column({ default: false })
-    autoStartPomodoros: boolean;
+    autoStartPomodoros!: boolean;
 
     @Column({ default: 4 })
-    longBreakInterval: number;
+    longBreakInterval!: number;
 
     @Column({ default: 'light' })
-    theme: string;
+    theme!: string;
 
     @Column({ default: true })
-    soundEnabled: boolean;
+    soundEnabled!: boolean;
 
     // ✨ NUEVO: Para soporte multiplataforma
     @Column({ default: 'web' })
-    platform: string; // 'web', 'mobile', 'desktop'
+    platform!: string; // 'web', 'mobile', 'desktop'
 
     // CAMBIO: De OneToOne a ManyToOne
     // Un usuario tiene muchas configuraciones (una por plataforma)
     @ManyToOne(() => User, (user) => user.settings, { onDelete: 'CASCADE' })
-    user: User;
+    user!: User;
 }
